@@ -6,15 +6,15 @@ import (
 
 type entity struct {
 	ID   int    `json:"id"`
-	Name string `json:"name"`
+	Data string `json:"Data"`
 }
 
 func (e *entity) getEntity(db *sql.DB) error {
-	return db.QueryRow("SELECT name FROM entitys WHERE id=$1", e.ID).Scan(&e.Name)
+	return db.QueryRow("SELECT Data FROM entitys WHERE id=$1", e.ID).Scan(&e.Data)
 }
 
 func (e *entity) updateEntity(db *sql.DB) error {
-	_, err := db.Exec("UPDATE entitys SET name=$1 WHERE id=$2", e.Name, e.ID)
+	_, err := db.Exec("UPDATE entitys SET Data=$1 WHERE id=$2", e.Data, e.ID)
 	return err
 }
 
@@ -26,13 +26,13 @@ func (e *entity) deleteEntity(db *sql.DB) error {
 func (e *entity) createEntity(db *sql.DB) error {
 	// postgres doesn't return the last inserted ID so this is the workaround
 	err := db.QueryRow(
-		"INSERT INTO entitys(name) VALUES($1) RETURNING id",
-		e.Name).Scan(&e.ID)
+		"INSERT INTO entitys(Data) VALUES($1) RETURNING id",
+		e.Data).Scan(&e.ID)
 	return err
 }
 
 func getEntitys(db *sql.DB, start, count int) ([]entity, error) {
-	rows, err := db.Query("SELECT id, name FROM entitys LIMIT $1 OFFSET $2", count, start)
+	rows, err := db.Query("SELECT id, Data FROM entitys LIMIT $1 OFFSET $2", count, start)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func getEntitys(db *sql.DB, start, count int) ([]entity, error) {
 
 	for rows.Next() {
 		var e entity
-		if err := rows.Scan(&e.ID, &e.Name); err != nil {
+		if err := rows.Scan(&e.ID, &e.Data); err != nil {
 			return nil, err
 		}
 		entitys = append(entitys, e)
