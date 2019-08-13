@@ -60,7 +60,8 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func (a *App) ok(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, http.StatusOK)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 func (a *App) getEntity(w http.ResponseWriter, r *http.Request) {
