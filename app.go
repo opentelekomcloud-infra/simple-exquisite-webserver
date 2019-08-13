@@ -39,6 +39,7 @@ func (a *App) Run(addr string) {
 
 //InitializeRoutes method
 func (a *App) InitializeRoutes() {
+	a.Router.HandleFunc("/", http.response.StatusOK)
 	a.Router.HandleFunc("/entitys", a.getEntitys).Methods("GET")
 	a.Router.HandleFunc("/entitys", a.createEntity).Methods("POST")
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.getEntity).Methods("GET")
