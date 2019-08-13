@@ -1,4 +1,4 @@
-module github.com/outcatcher/simple-exquisite-webserver.git
+module github.com/outcatcher/simple-exquisite-webserver
 
 go 1.12
 
