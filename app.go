@@ -39,7 +39,7 @@ func (a *App) Run(addr string) {
 
 //InitializeRoutes method
 func (a *App) InitializeRoutes() {
-	a.Router.HandleFunc("/", http.response.StatusOK)
+	a.Router.HandleFunc("/", a.ok).Methods("GET")
 	a.Router.HandleFunc("/entitys", a.getEntitys).Methods("GET")
 	a.Router.HandleFunc("/entitys", a.createEntity).Methods("POST")
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.getEntity).Methods("GET")
@@ -57,6 +57,10 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
+}
+
+func (a *App) ok(w http.ResponseWriter, r *http.Request) {
+	respondWithJSON(w, http.StatusOK)
 }
 
 func (a *App) getEntity(w http.ResponseWriter, r *http.Request) {
