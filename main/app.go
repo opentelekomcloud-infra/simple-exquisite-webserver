@@ -45,6 +45,14 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.DeleteEntity).Methods("DELETE")
 }
 
+func checkResponseOnError(w http.ResponseWriter, r *http.Request, e entity) {
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&e); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+}
+
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
@@ -57,11 +65,13 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+//Ok method
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
+//GetEntity method
 func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -71,7 +81,7 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	}
 	e := entity{ID: id}
 
-	if err := e.GetEntity(a.DB); err != nil {
+	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
 			respondWithError(w, http.StatusNotFound, "entity not found")
@@ -83,6 +93,7 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
+//GetEntities method
 func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.URL.Query().Get("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
@@ -94,7 +105,7 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	entities, err := GetEntities(a.DB, start, count)
+	entities, err := getEntities(a.DB, start, count)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -103,16 +114,13 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, entities)
 }
 
+//CreateEntity method
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
+	checkResponseOnError(w, r, e)
 	defer r.Body.Close()
 
-	if err := e.CreateEntity(a.DB); err != nil {
+	if err := e.createEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -120,6 +128,7 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, e)
 }
 
+//UpdateEntity method
 func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -129,15 +138,11 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var e entity
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
+	checkResponseOnError(w, r, e)
 	defer r.Body.Close()
 	e.ID = id
 
-	if err := e.UpdateEntity(a.DB); err != nil {
+	if err := e.updateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -145,6 +150,7 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
+//DeleteEntity method
 func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -154,7 +160,7 @@ func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := entity{ID: id}
-	if err := e.DeleteEntity(a.DB); err != nil {
+	if err := e.deleteEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
