@@ -32,19 +32,17 @@ func (a *App) Initialize(user, password, dbname string) {
 
 //Run method
 func (a *App) Run(addr string) {
-	// ListenAndServer needs a port string and Handler which requires ServeHTTP(ResponseWriter, *Request) method
-	// The mux.Router implements ServeHTTP(response, *request)
-	log.Fatal(http.ListenAndServe(":6669", a.Router))
+	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
 
 //InitializeRoutes method
 func (a *App) InitializeRoutes() {
-	a.Router.HandleFunc("/", a.ok).Methods("GET")
-	a.Router.HandleFunc("/entitys", a.getEntitys).Methods("GET")
-	a.Router.HandleFunc("/entity", a.createEntity).Methods("POST")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.getEntity).Methods("GET")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.updateEntity).Methods("PUT")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.deleteEntity).Methods("DELETE")
+	a.Router.HandleFunc("/", a.Ok).Methods("GET")
+	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
+	a.Router.HandleFunc("/entity", a.CreateEntity).Methods("POST")
+	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.GetEntity).Methods("GET")
+	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.UpdateEntity).Methods("PUT")
+	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.DeleteEntity).Methods("DELETE")
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -59,12 +57,12 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-func (a *App) ok(w http.ResponseWriter, r *http.Request) {
+func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func (a *App) getEntity(w http.ResponseWriter, r *http.Request) {
+func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -73,7 +71,7 @@ func (a *App) getEntity(w http.ResponseWriter, r *http.Request) {
 	}
 	e := entity{ID: id}
 
-	if err := e.getEntity(a.DB); err != nil {
+	if err := e.GetEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
 			respondWithError(w, http.StatusNotFound, "entity not found")
@@ -85,7 +83,7 @@ func (a *App) getEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
-func (a *App) getEntitys(w http.ResponseWriter, r *http.Request) {
+func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.URL.Query().Get("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
 
@@ -96,16 +94,16 @@ func (a *App) getEntitys(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	entitys, err := getEntitys(a.DB, start, count)
+	entities, err := GetEntities(a.DB, start, count)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, entitys)
+	respondWithJSON(w, http.StatusOK, entities)
 }
 
-func (a *App) createEntity(w http.ResponseWriter, r *http.Request) {
+func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
@@ -114,7 +112,7 @@ func (a *App) createEntity(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err := e.createEntity(a.DB); err != nil {
+	if err := e.CreateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -122,7 +120,7 @@ func (a *App) createEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, e)
 }
 
-func (a *App) updateEntity(w http.ResponseWriter, r *http.Request) {
+func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -139,7 +137,7 @@ func (a *App) updateEntity(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	e.ID = id
 
-	if err := e.updateEntity(a.DB); err != nil {
+	if err := e.UpdateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -147,7 +145,7 @@ func (a *App) updateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
-func (a *App) deleteEntity(w http.ResponseWriter, r *http.Request) {
+func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -156,7 +154,7 @@ func (a *App) deleteEntity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	e := entity{ID: id}
-	if err := e.deleteEntity(a.DB); err != nil {
+	if err := e.DeleteEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
