@@ -41,7 +41,7 @@ func (a *App) Run(addr string) {
 func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/", a.ok).Methods("GET")
 	a.Router.HandleFunc("/entitys", a.getEntitys).Methods("GET")
-	a.Router.HandleFunc("/entitys", a.createEntity).Methods("POST")
+	a.Router.HandleFunc("/entity", a.createEntity).Methods("POST")
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.getEntity).Methods("GET")
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.updateEntity).Methods("PUT")
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.deleteEntity).Methods("DELETE")
