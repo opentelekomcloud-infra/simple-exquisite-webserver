@@ -18,10 +18,12 @@ type App struct {
 	DB     *sql.DB
 }
 
+//LogWriter wrapper for error handling
 type LogWriter struct {
 	http.ResponseWriter
 }
 
+//Write func for LogWriter wrapper
 func (w LogWriter) Write(p []byte) (n int, err error) {
 	n, err = w.ResponseWriter.Write(p)
 	if err != nil {
