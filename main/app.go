@@ -72,19 +72,19 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	w = LogWriter{w}
+	var writer = LogWriter{w}
 	response, _ := json.Marshal(payload)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(code)
+	writer.Write(response)
 }
 
 //Ok method
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
-	w = LogWriter{w}
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	var writer = LogWriter{w}
+	writer.WriteHeader(http.StatusOK)
+	writer.Write([]byte("OK"))
 }
 
 //GetEntity method
