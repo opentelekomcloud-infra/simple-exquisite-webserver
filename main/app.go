@@ -45,6 +45,12 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.DeleteEntity).Methods("DELETE")
 }
 
+func logerr(n int, err error) {
+	if err != nil {
+		log.Printf("Write failed: %v", err)
+	}
+}
+
 func checkResponseOnError(w http.ResponseWriter, r *http.Request, e entity) {
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
@@ -62,13 +68,13 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	logerr(w.Write(response))
 }
 
 //Ok method
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	logerr(w.Write([]byte("OK")))
 }
 
 //GetEntity method

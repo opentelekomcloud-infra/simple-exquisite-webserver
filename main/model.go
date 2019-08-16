@@ -46,7 +46,7 @@ func getEntities(db *sql.DB, start, count int) ([]entity, error) {
 	rows, err := db.Query("SELECT id, Data FROM entities LIMIT $1 OFFSET $2", count, start)
 	if err != nil {
 		if isConnectionError(err) {
-			return nil, errors.New("Сan't connect to database.\n")
+			return nil, errors.New("can't connect to database")
 		}
 		return nil, err
 	}
