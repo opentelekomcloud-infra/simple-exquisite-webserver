@@ -18,6 +18,18 @@ type App struct {
 	DB     *sql.DB
 }
 
+type LogWriter struct {
+	http.ResponseWriter
+}
+
+func (w LogWriter) Write(p []byte) (n int, err error) {
+	n, err = w.ResponseWriter.Write(p)
+	if err != nil {
+		log.Printf("Write failed: %v", err)
+	}
+	return
+}
+
 //Initialize method
 func (a *App) Initialize(user, password, dbname string) {
 	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
@@ -58,6 +70,7 @@ func respondWithError(w http.ResponseWriter, code int, message string) {
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w = LogWriter{w}
 	response, _ := json.Marshal(payload)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -67,6 +80,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 //Ok method
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
+	w = LogWriter{w}
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
