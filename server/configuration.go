@@ -61,18 +61,3 @@ func (c *Configuration) writeConfiguration() *Configuration {
 	fmt.Printf("--- t:\n%v\n\n", data)
 	return c
 }
-
-//func main() {
-//	var c Configuration
-//	c.loadConfiguration()
-//
-//	fmt.Println(c)
-//}
-
-// func write_configuration (path=DEFAULT_CFG_PATH) {
-
-//}
-
-//func load_configuration (path=DEFAULT_CFG_PATH) {
-
-//}
