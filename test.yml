@@ -1,9 +1,0 @@
-# Server configurations
-server:
-  host: "localhost"
-  port: 8000
-
-# Database credentials
-database:
-  user: "admin"
-  pass: "super-pedro-1980"
