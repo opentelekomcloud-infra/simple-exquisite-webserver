@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net"
 )
 
 type entity struct {
-	ID   int    `json:"id"`
+	ID   string `json:"id"`
 	Data string `json:"Data"`
 }
 
@@ -26,11 +27,10 @@ func (e *entity) deleteEntity(db *sql.DB) error {
 }
 
 func (e *entity) createEntity(db *sql.DB) error {
-
+	fmt.Printf("Data: %v \n", e.Data)
 	// postgres doesn't return the last inserted ID so this is the workaround
 	err := db.QueryRow(
-		"INSERT INTO entities(Data) VALUES($1)",
-		e.Data).Scan(&e.ID)
+		"INSERT INTO entities(ID, Data) VALUES($1, $2)", e.ID, e.Data).Scan(&e.ID)
 	return err
 }
 

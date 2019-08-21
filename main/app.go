@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/twinj/uuid"
 )
 
 //App struct
@@ -68,11 +69,14 @@ func logerr(n int, err error) {
 }
 
 func checkResponseOnError(w http.ResponseWriter, r *http.Request, e entity) {
+	fmt.Printf("request body: %v \n", r.Body)
+	fmt.Printf("entity: %v \n", &e)
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
+	defer r.Body.Close()
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -96,11 +100,8 @@ func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 //GetEntity method
 func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid entity ID")
-		return
-	}
+	id := vars["id"]
+
 	e := entity{ID: id}
 
 	if err := e.getEntity(a.DB); err != nil {
@@ -139,8 +140,8 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 //CreateEntity method
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
+	e.ID = uuid.NewV4().String()
 	checkResponseOnError(w, r, e)
-	defer r.Body.Close()
 
 	if err := e.createEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -153,11 +154,7 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 //UpdateEntity method
 func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid entity ID")
-		return
-	}
+	id := vars["id"]
 
 	var e entity
 	checkResponseOnError(w, r, e)
@@ -175,11 +172,7 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 //DeleteEntity method
 func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid entity ID")
-		return
-	}
+	id := vars["id"]
 
 	e := entity{ID: id}
 	if err := e.deleteEntity(a.DB); err != nil {
