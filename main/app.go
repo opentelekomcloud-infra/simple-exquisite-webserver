@@ -42,6 +42,7 @@ func (a *App) Initialize(config Configuration) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		CreateTable(a.DB)
 	}
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()

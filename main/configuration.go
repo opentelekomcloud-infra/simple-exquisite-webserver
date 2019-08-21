@@ -50,8 +50,7 @@ func (c *Configuration) loadConfiguration() *Configuration {
 }
 
 func (c *Configuration) writeConfiguration(debug bool) *Configuration {
-	var conf Configuration
-	conf = c.InitConfiguration(debug)
+	var conf = c.InitConfiguration(debug)
 	data, err := yaml.Marshal(&conf)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
