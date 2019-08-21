@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 //App struct
@@ -22,7 +23,7 @@ type App struct {
 //Initialize method
 func (a *App) Initialize(config Configuration) {
 	var err error
-	if config.Debug == false {
+	if !config.Debug {
 		var PgDbURL = config.PgDbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
 		port, err := strconv.Atoi(dbURLSliced[1])
