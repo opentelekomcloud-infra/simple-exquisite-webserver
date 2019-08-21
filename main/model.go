@@ -26,9 +26,10 @@ func (e *entity) deleteEntity(db *sql.DB) error {
 }
 
 func (e *entity) createEntity(db *sql.DB) error {
+
 	// postgres doesn't return the last inserted ID so this is the workaround
 	err := db.QueryRow(
-		"INSERT INTO entities(Data) VALUES($1) RETURNING id",
+		"INSERT INTO entities(Data) VALUES($1)",
 		e.Data).Scan(&e.ID)
 	return err
 }
