@@ -37,7 +37,7 @@ func (a *App) Initialize(config Configuration) {
 			log.Fatal(err)
 		}
 	} else {
-		a.DB, err = sql.Open("sqlite3", "$HOME/entities.db")
+		a.DB, err = sql.Open("sqlite3", "entities.db")
 		if err != nil {
 			log.Fatal(err)
 		}
