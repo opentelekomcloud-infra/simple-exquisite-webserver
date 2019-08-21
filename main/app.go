@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -19,12 +20,26 @@ type App struct {
 }
 
 //Initialize method
-func (a *App) Initialize(user, password, dbname string) {
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
+func (a *App) Initialize(config Configuration) {
 	var err error
-	a.DB, err = sql.Open("postgres", connectionString)
-	if err != nil {
-		log.Fatal(err)
+	if config.Debug == false {
+		var PgDbURL = config.PgDbURL
+		dbURLSliced := strings.Split(PgDbURL, ":")
+		port, err := strconv.Atoi(dbURLSliced[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			dbURLSliced[0], port, config.PgUsername, config.PgPassword, config.PgDatabase)
+		a.DB, err = sql.Open("postgres", connectionString)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		a.DB, err = sql.Open("sqlite3", "entities.db")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
