@@ -21,7 +21,7 @@ type App struct {
 	DB     *sql.DB
 }
 
-//Initialize method
+//Initialize func: init server according configuration structure
 func (a *App) Initialize(config Configuration) {
 	var err error
 	if !config.Debug {
@@ -48,12 +48,12 @@ func (a *App) Initialize(config Configuration) {
 	a.InitializeRoutes()
 }
 
-//Run method
+//Run server
 func (a *App) Run(addr string) {
 	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
 
-//InitializeRoutes method
+//InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/", a.Ok).Methods("GET")
 	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
@@ -81,13 +81,13 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	logerr(w.Write(response))
 }
 
-//Ok method
+//Ok answer for root calls
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	logerr(w.Write([]byte("OK")))
 }
 
-//GetEntity method
+//GetEntity by Id
 func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -127,7 +127,7 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, entities)
 }
 
-//CreateEntity method
+//CreateEntity - with guid generator for Id's
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
 	e.ID = uuid.NewV4().String()
@@ -146,12 +146,12 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, e)
 }
 
-//UpdateEntity method
+//UpdateEntity by Id
 func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
+	var e entity
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	var e entity
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -168,7 +168,7 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
-//DeleteEntity method
+//DeleteEntity by Id
 func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]

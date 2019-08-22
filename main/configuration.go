@@ -11,7 +11,7 @@ import (
 //const defaultCfgPATH = ""/etc/exquisite/config.yml""
 const defaultCfgPATH = "config.yml"
 
-// Configuration structure
+// Configuration file structure
 type Configuration struct {
 	Debug      bool   `yaml:"debug"`
 	ServerPort int    `yaml:"server_port"`
@@ -21,7 +21,7 @@ type Configuration struct {
 	PgPassword string `yaml:"pg_password"`
 }
 
-// InitConfiguration method
+// InitConfiguration method for writeConfiguration func
 func (c *Configuration) InitConfiguration(debug bool) Configuration {
 	configuration := Configuration{}
 	if debug {
@@ -37,6 +37,7 @@ func (c *Configuration) InitConfiguration(debug bool) Configuration {
 	return configuration
 }
 
+// loadConfiguration load configuration from config.yml
 func (c *Configuration) loadConfiguration() *Configuration {
 	yamlFile, err := ioutil.ReadFile(defaultCfgPATH)
 	if err != nil {
@@ -49,6 +50,7 @@ func (c *Configuration) loadConfiguration() *Configuration {
 	return c
 }
 
+// writeConfiguration write config.yml if it not exist with debug or not mode
 func (c *Configuration) writeConfiguration(debug bool) *Configuration {
 	var conf = c.InitConfiguration(debug)
 	data, err := yaml.Marshal(&conf)
