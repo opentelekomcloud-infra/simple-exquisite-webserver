@@ -28,7 +28,8 @@ func CreateTable(db *sql.DB) {
 }
 
 func (e *entity) getEntity(db *sql.DB) error {
-	return db.QueryRow("SELECT Data FROM entities WHERE Id=$1", e.ID).Scan(&e.Data)
+	fmt.Printf("ID: %v \n", e.ID)
+	return db.QueryRow("SELECT Data FROM entities WHERE Id like ($1)", e.ID).Scan(&e.Data)
 }
 
 func (e *entity) updateEntity(db *sql.DB) error {
@@ -44,8 +45,9 @@ func (e *entity) deleteEntity(db *sql.DB) error {
 func (e *entity) createEntity(db *sql.DB) error {
 	fmt.Printf("Data: %v \n", e.Data)
 	// postgres doesn't return the last inserted ID so this is the workaround
-	err := db.QueryRow(
-		"INSERT INTO entities(Id, Data) VALUES($1, $2)", e.ID, e.Data).Scan(&e.ID)
+	result, err := db.Exec(
+		"INSERT INTO entities(Id, Data) VALUES($1, $2)", e.ID, e.Data)
+	fmt.Printf("result: %v \n", result)
 	return err
 }
 

@@ -58,26 +58,15 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc("/", a.Ok).Methods("GET")
 	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
 	a.Router.HandleFunc("/entity", a.CreateEntity).Methods("POST")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.GetEntity).Methods("GET")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.UpdateEntity).Methods("PUT")
-	a.Router.HandleFunc("/entity/{id:[0-9]+}", a.DeleteEntity).Methods("DELETE")
+	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.GetEntity).Methods("GET")
+	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.UpdateEntity).Methods("PUT")
+	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.DeleteEntity).Methods("DELETE")
 }
 
 func logerr(n int, err error) {
 	if err != nil {
 		log.Printf("Write failed: %v", err)
 	}
-}
-
-func checkResponseOnError(w http.ResponseWriter, r *http.Request, e entity) {
-	fmt.Printf("request body: %v \n", r.Body)
-	fmt.Printf("entity: %v \n", &e)
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	defer r.Body.Close()
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -104,7 +93,7 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	e := entity{ID: id}
-
+	fmt.Printf("App.go GetEntity ID: %v \n", e.ID)
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -142,7 +131,12 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
 	e.ID = uuid.NewV4().String()
-	checkResponseOnError(w, r, e)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&e); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
 
 	if err := e.createEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -158,7 +152,11 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	var e entity
-	checkResponseOnError(w, r, e)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&e); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
 	defer r.Body.Close()
 	e.ID = id
 
