@@ -55,12 +55,13 @@ func (a *App) Run(addr string) {
 
 //InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
+	var routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
 	a.Router.HandleFunc("/", a.Ok).Methods("GET")
 	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
 	a.Router.HandleFunc("/entity", a.CreateEntity).Methods("POST")
-	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.GetEntity).Methods("GET")
-	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.UpdateEntity).Methods("PUT")
-	a.Router.HandleFunc("/entity/{id:[a-z0-9_-]*}", a.DeleteEntity).Methods("DELETE")
+	a.Router.HandleFunc(routeUUID4, a.GetEntity).Methods("GET")
+	a.Router.HandleFunc(routeUUID4, a.UpdateEntity).Methods("PUT")
+	a.Router.HandleFunc(routeUUID4, a.DeleteEntity).Methods("DELETE")
 }
 
 func logerr(n int, err error) {
@@ -93,7 +94,6 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	e := entity{ID: id}
-	fmt.Printf("App.go GetEntity ID: %v \n", e.ID)
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
