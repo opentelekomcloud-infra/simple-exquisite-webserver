@@ -38,8 +38,11 @@ func (c *Configuration) initConfiguration(debug bool) *Configuration {
 }
 
 // loadConfiguration load configuration from config.yml
-func (c *Configuration) loadConfiguration() *Configuration {
-	yamlFile, err := ioutil.ReadFile(defaultCfgPATH)
+func (c *Configuration) loadConfiguration(path string) *Configuration {
+	if path == "" {
+		path = defaultCfgPATH
+	}
+	yamlFile, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
@@ -51,21 +54,24 @@ func (c *Configuration) loadConfiguration() *Configuration {
 }
 
 // writeConfiguration write config.yml if it not exist with debug or not mode
-func (c *Configuration) writeConfiguration(debug bool) *Configuration {
+func (c *Configuration) writeConfiguration(path string, debug bool) *Configuration {
+	if path == "" {
+		path = defaultCfgPATH
+	}
 	var conf = c.initConfiguration(debug)
 	data, err := yaml.Marshal(&conf)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
 	}
 
-	if _, err := os.Stat(defaultCfgPATH); os.IsNotExist(err) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// write to file
-		f, err := os.Create(defaultCfgPATH)
+		f, err := os.Create(path)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		err = ioutil.WriteFile(defaultCfgPATH, data, 0644)
+		err = ioutil.WriteFile(path, data, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
