@@ -2,7 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -19,6 +18,12 @@ type Configuration struct {
 	PgDatabase string `yaml:"pg_database"`
 	PgUsername string `yaml:"pg_username"`
 	PgPassword string `yaml:"pg_password"`
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
 
 // initConfiguration method for writeConfiguration func
@@ -43,13 +48,9 @@ func (c *Configuration) loadConfiguration(path string) *Configuration {
 		path = defaultCfgPATH
 	}
 	yamlFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
-	}
+	check(err)
 	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
-	}
+	check(err)
 	return c
 }
 
@@ -60,21 +61,15 @@ func (c *Configuration) writeConfiguration(path string, debug bool) *Configurati
 	}
 	var conf = c.initConfiguration(debug)
 	data, err := yaml.Marshal(&conf)
-	if err != nil {
-		log.Fatalf("error: %+v", err)
-	}
+	check(err)
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// write to file
 		f, err := os.Create(path)
-		if err != nil {
-			log.Fatal(err)
-		}
+		check(err)
 
 		err = ioutil.WriteFile(path, data, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
+		check(err)
 
 		f.Close()
 	}
