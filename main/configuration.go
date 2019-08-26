@@ -21,9 +21,9 @@ type Configuration struct {
 	PgPassword string `yaml:"pg_password"`
 }
 
-// InitConfiguration method for writeConfiguration func
-func (c *Configuration) InitConfiguration(debug bool) Configuration {
-	configuration := Configuration{}
+// initConfiguration method for writeConfiguration func
+func (c *Configuration) initConfiguration(debug bool) *Configuration {
+	configuration := new(Configuration)
 	if debug {
 		configuration.Debug = true
 	} else {
@@ -52,7 +52,7 @@ func (c *Configuration) loadConfiguration() *Configuration {
 
 // writeConfiguration write config.yml if it not exist with debug or not mode
 func (c *Configuration) writeConfiguration(debug bool) *Configuration {
-	var conf = c.InitConfiguration(debug)
+	var conf = c.initConfiguration(debug)
 	data, err := yaml.Marshal(&conf)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
