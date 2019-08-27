@@ -3,11 +3,11 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v2"
 )
 
-//const defaultCfgPATH = ""/etc/exquisite/config.yml""
 const defaultCfgPATH = "config.yml"
 
 // Configuration file structure
@@ -42,8 +42,8 @@ func (c *Configuration) initConfiguration(debug bool) *Configuration {
 	return configuration
 }
 
-// loadConfiguration load configuration from config.yml
-func (c *Configuration) loadConfiguration(path string) *Configuration {
+// LoadConfiguration load configuration from config.yml
+func (c *Configuration) LoadConfiguration(path string) *Configuration {
 	if path == "" {
 		path = defaultCfgPATH
 	}
@@ -54,8 +54,8 @@ func (c *Configuration) loadConfiguration(path string) *Configuration {
 	return c
 }
 
-// writeConfiguration write config.yml if it not exist with debug or not mode
-func (c *Configuration) writeConfiguration(path string, debug bool) *Configuration {
+// WriteConfiguration write config.yml if it not exist with debug or not mode
+func (c *Configuration) WriteConfiguration(path string, debug bool) *Configuration {
 	if path == "" {
 		path = defaultCfgPATH
 	}
@@ -65,8 +65,10 @@ func (c *Configuration) writeConfiguration(path string, debug bool) *Configurati
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// write to file
-		f, err := os.Create(path)
-		check(err)
+		f, err := os.Create(filepath.Join(filepath.Dir(path), filepath.Base(path)))
+		if err != nil {
+			check(err)
+		}
 
 		err = ioutil.WriteFile(path, data, 0644)
 		check(err)

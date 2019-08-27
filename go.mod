@@ -6,6 +6,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-sqlite3 v1.11.0
+	github.com/onsi/gomega v1.6.0
 	github.com/twinj/uuid v1.0.0
 	gopkg.in/yaml.v2 v2.2.2
 )

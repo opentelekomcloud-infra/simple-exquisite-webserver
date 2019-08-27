@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	fmt.Printf("Start....\n")
@@ -10,8 +12,8 @@ func main() {
 		config Configuration
 		debug  = true
 	)
-	config.writeConfiguration("", debug)
-	config.loadConfiguration("")
+	config.WriteConfiguration("", debug)
+	config.LoadConfiguration("")
 	fmt.Printf("Load config\n")
 	a.Initialize(config)
 	fmt.Printf("Init app\n")
