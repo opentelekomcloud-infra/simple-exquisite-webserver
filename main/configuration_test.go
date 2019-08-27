@@ -3,6 +3,7 @@ package main_test
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,15 +12,21 @@ import (
 	"github.com/outcatcher/simple-exquisite-webserver/main"
 )
 
+func logerr(n int, err error) {
+	if err != nil {
+		log.Printf("Write failed: %v", err)
+	}
+}
+
 func validRandomPath() string {
 	randBytes := make([]byte, 10)
-	rand.Read(randBytes)
+	logerr(rand.Read(randBytes))
 	return filepath.Join(os.TempDir(), "/"+hex.EncodeToString(randBytes)+".yml")
 }
 
 func invalidRandomPath() string {
 	randBytes := make([]byte, 10)
-	rand.Read(randBytes)
+	logerr(rand.Read(randBytes))
 	return filepath.Join("/" + hex.EncodeToString(randBytes))
 }
 
