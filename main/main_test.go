@@ -39,7 +39,9 @@ func ensureTableExists() {
 }
 
 func clearTable() {
-	a.DB.Exec("DELETE FROM entities")
+	if _, err := a.DB.Exec("DELETE FROM entities"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -55,13 +57,21 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 	}
 }
 
+func checkErr(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func addEntities(count int) {
 	if count < 1 {
 		count = 1
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO entities(Id, Data) VALUES($1, $2)", "Data "+strconv.Itoa(i), uuid.NewV4().String())
+		if _, err := a.DB.Exec("INSERT INTO entities(Id, Data) VALUES($1, $2)", "Data "+strconv.Itoa(i), uuid.NewV4().String()); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -96,7 +106,8 @@ func TestNonExistingEntity(t *testing.T) {
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 
 	var m map[string]string
-	json.Unmarshal(response.Body.Bytes(), &m)
+	var err = json.Unmarshal(response.Body.Bytes(), &m)
+	checkErr(err)
 
 	if m["error"] != "entity not found" {
 		t.Errorf("Expected the 'error' key of the response to be set to 'entity not found'. Got '%s'", m["error"])
@@ -113,8 +124,8 @@ func TestCreateEntity(t *testing.T) {
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
 	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
-
+	var err = json.Unmarshal(response.Body.Bytes(), &m)
+	checkErr(err)
 	if m["Data"] != "test data" {
 		t.Errorf("Expected product Data to be 'test data'. Got '%v'", m["Data"])
 	}
@@ -143,7 +154,8 @@ func TestUpdateEntity(t *testing.T) {
 	response := executeRequest(req)
 
 	var originalEntity = []*entity{}
-	json.Unmarshal(response.Body.Bytes(), &originalEntity)
+	var err = json.Unmarshal(response.Body.Bytes(), &originalEntity)
+	checkErr(err)
 
 	payload := []byte((fmt.Sprintf(`{"Data": "test data - updated", "Id": "%s"}`, originalEntity[0].Id)))
 	updateRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Id)
@@ -153,7 +165,8 @@ func TestUpdateEntity(t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
+	err = json.Unmarshal(response.Body.Bytes(), &m)
+	checkErr(err)
 
 	if m["Id"] != originalEntity[0].Id {
 		t.Errorf("Expected the id to remain the same (%v). Got %v", originalEntity[0].Id, m["Id"])
@@ -173,7 +186,8 @@ func TestDeleteEntity(t *testing.T) {
 	response := executeRequest(req)
 
 	var originalEntity = []*entity{}
-	json.Unmarshal(response.Body.Bytes(), &originalEntity)
+	var err = json.Unmarshal(response.Body.Bytes(), &originalEntity)
+	checkErr(err)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 

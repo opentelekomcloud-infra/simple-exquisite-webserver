@@ -14,7 +14,7 @@ import (
 
 func logerr(n int, err error) {
 	if err != nil {
-		log.Printf("Write failed: %v", err)
+		log.Printf("Read failed: %v", err)
 	}
 }
 
