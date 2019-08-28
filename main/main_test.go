@@ -142,6 +142,7 @@ func TestGetRoot(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
+
 func TestGetEntities(t *testing.T) {
 	clearTable()
 	addEntities(1)

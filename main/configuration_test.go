@@ -12,6 +12,9 @@ import (
 	"github.com/outcatcher/simple-exquisite-webserver/main"
 )
 
+/**
+ * Helper functions
+ */
 func logerr(n int, err error) {
 	if err != nil {
 		log.Printf("Read failed: %v", err)
@@ -30,6 +33,9 @@ func invalidRandomPath() string {
 	return filepath.Join("/" + hex.EncodeToString(randBytes))
 }
 
+/**
+ * Test functions
+ */
 //WriteConfig test with invalid path
 func TestWriteConfigPanicOnInvalidPath(t *testing.T) {
 	var config main.Configuration
