@@ -71,7 +71,7 @@ func getEntities(db *sql.DB, start, count int) ([]entity, error) {
 
 	for rows.Next() {
 		var e entity
-		if err := rows.Scan(&e.ID, &e.Data); err != nil {
+		if err := rows.Scan(&e.Data, &e.ID); err != nil {
 			return nil, err
 		}
 		entities = append(entities, e)
