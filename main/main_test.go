@@ -80,12 +80,13 @@ func addEntities(count int) {
  */
 func TestMain(m *testing.M) {
 	a = main.App{}
-	var (
-		config main.Configuration
-		debug  = true
-	)
-	config.WriteConfiguration("", debug)
-	config.LoadConfiguration("")
+	config, err := main.LoadConfiguration("")
+	if err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+	}
+	config.Debug = true
 	a.Initialize(config)
 
 	ensureTableExists()
@@ -192,7 +193,7 @@ func TestDeleteEntity(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/entities", nil)
 	response := executeRequest(req)
 
-	var originalEntity = []*entity{}
+	var originalEntity []*entity
 	var err = json.Unmarshal(response.Body.Bytes(), &originalEntity)
 	checkErr(err)
 

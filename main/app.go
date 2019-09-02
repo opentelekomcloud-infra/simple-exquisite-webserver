@@ -16,6 +16,7 @@ import (
 )
 
 const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
+
 //App struct
 type App struct {
 	Router *mux.Router
@@ -23,7 +24,7 @@ type App struct {
 }
 
 //Initialize func: init server according configuration structure
-func (a *App) Initialize(config Configuration) {
+func (a *App) Initialize(config *Configuration) {
 	var err error
 	if !config.Debug {
 		var PgDbURL = config.PgDbURL

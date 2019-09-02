@@ -1,11 +1,9 @@
 package main
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-
-	"gopkg.in/yaml.v2"
 )
 
 const defaultCfgPATH = "config.yml"
@@ -26,54 +24,45 @@ func check(e error) {
 	}
 }
 
-// initConfiguration method for writeConfiguration func
-func (c *Configuration) initConfiguration(debug bool) *Configuration {
-	configuration := new(Configuration)
-	if debug {
-		configuration.Debug = true
-	} else {
-		configuration.Debug = false
-		configuration.PgDatabase = "entities"
-		configuration.PgDbURL = "localhost:9999"
-		configuration.PgUsername = "entities"
-		configuration.PgPassword = ""
-		configuration.ServerPort = 5054
-	}
-	return configuration
-}
-
-// LoadConfiguration load configuration from config.yml
-func (c *Configuration) LoadConfiguration(path string) *Configuration {
+// LoadConfiguration load configuration from test_config.yml
+func LoadConfiguration(path string) (*Configuration, error) {
 	if path == "" {
 		path = defaultCfgPATH
 	}
 	yamlFile, err := ioutil.ReadFile(path)
-	check(err)
-	err = yaml.Unmarshal(yamlFile, c)
-	check(err)
-	return c
+	cfg := Configuration{}
+	if err == nil {
+		err = yaml.Unmarshal(yamlFile, &cfg)
+	}
+	return &cfg, err
 }
 
-// WriteConfiguration write config.yml if it not exist with debug or not mode
-func (c *Configuration) WriteConfiguration(path string, debug bool) *Configuration {
+func createNewConfigFile(path string, data *[]byte) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(*data)
+	_ = f.Close()
+	return err
+}
+
+// WriteConfiguration write test_config.yml if it not exist with debug or not mode
+func (c *Configuration) WriteConfiguration(path string) error {
 	if path == "" {
 		path = defaultCfgPATH
 	}
-	var conf = c.initConfiguration(debug)
-	data, err := yaml.Marshal(&conf)
-	check(err)
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// write to file
-		f, err := os.Create(filepath.Join(filepath.Dir(path), filepath.Base(path)))
-		if err != nil {
-			check(err)
-		}
-
-		err = ioutil.WriteFile(path, data, 0644)
-		check(err)
-
-		f.Close()
+	data, err := yaml.Marshal(&c)
+	if err != nil {
+		return err
 	}
-	return c
+	_, err = os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// write to file
+			return createNewConfigFile(path, &data)
+		}
+		return err
+	}
+	return nil
 }

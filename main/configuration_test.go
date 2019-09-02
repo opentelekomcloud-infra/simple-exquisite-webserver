@@ -1,11 +1,15 @@
 package main_test
 
 import (
-	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"github.com/google/go-cmp/cmp"
+	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -37,57 +41,97 @@ func invalidRandomPath() string {
  * Test functions
  */
 //WriteConfig test with invalid path
-func TestWriteConfigPanicOnInvalidPath(t *testing.T) {
+func TestWriteConfigErrorOnInvalidPath(t *testing.T) {
 	var config main.Configuration
 	var path = invalidRandomPath()
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
 	// The following is the code under test
-	config.WriteConfiguration(path, true)
+	err := config.WriteConfiguration(path)
+	if err == nil {
+		t.Errorf("No error on writing to invalid path")
+	}
 }
 
 //LoadConfig test with invalid path
-func TestLoadConfigPanicOnInvalidFilepath(t *testing.T) {
-	var config main.Configuration
+func TestLoadConfigErrorOnInvalidFilepath(t *testing.T) {
 	var path = invalidRandomPath()
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
-	// The following is the code under test
-	config.LoadConfiguration(path)
+	_, err := main.LoadConfiguration(path)
+	if err == nil {
+		t.Errorf("No exception on reading from invalid path")
+	}
 }
 
-//Load debug=true config test with valid path
-func TestWriteAndLoadDebugConfigValidPath(t *testing.T) {
-	g := NewGomegaWithT(t)
-	var config main.Configuration
-	var path = validRandomPath()
+var r = rand.New(rand.NewSource(0))
 
-	config.WriteConfiguration(path, true)
-	config.LoadConfiguration(path)
-
-	g.Expect(config.Debug).To(Equal(true))
+func strConfigTemplate(src *main.Configuration) []string {
+	return []string{
+		fmt.Sprintf("debug: %v", src.Debug),
+		fmt.Sprintf("server_port: %v", src.ServerPort),
+		fmt.Sprintf("pg_db_url: %v", src.PgDbURL),
+		fmt.Sprintf("pg_database: %v", src.PgDatabase),
+		fmt.Sprintf("pg_username: %v", src.PgUsername),
+		fmt.Sprintf("pg_password: %v", src.PgPassword),
+	}
 }
 
-//Load debug=false config test with valid path
-func TestWriteAndLoadConfigValidPath(t *testing.T) {
-	g := NewGomegaWithT(t)
-	var config main.Configuration
+func TestWriteConfigValidPath(t *testing.T) {
+	g := NewWithT(t)
+	src := main.Configuration{
+		Debug:      1 == r.Intn(1),
+		ServerPort: r.Intn(0xffff),
+		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+		PgDatabase: "edlkjsfd",
+		PgUsername: "sfdjnsfdjlkjsfd",
+		PgPassword: "opoxgdp[koiujiklililhkjg",
+	}
 	var path = validRandomPath()
+	err := src.WriteConfiguration(path)
+	if err != nil {
+		t.Errorf("Can't write configuration")
+	} else {
+		t.Logf("Config written to %s", path)
+	}
 
-	config.WriteConfiguration(path, false)
-	config.LoadConfiguration(path)
+	targetFile, _ := os.Open(path)
+	buffer, err := ioutil.ReadAll(targetFile)
+	if err != nil {
+		t.Errorf("Can't read configuration file")
+	}
+	strBuf := string(buffer)
 
-	g.Expect(config.Debug).To(Equal(false))
-	g.Expect(config.PgDatabase).To(Equal("entities"))
-	g.Expect(config.PgDbURL).To(Equal("localhost:9999"))
-	g.Expect(config.PgUsername).To(Equal("entities"))
-	g.Expect(config.PgPassword).To(Equal(""))
+	data := strings.Split(strings.TrimSpace(strBuf), "\n")
+
+	expected := strConfigTemplate(&src)
+	g.Expect(data).Should(Equal(expected))
+}
+
+func TestLoadConfigValidPath(t *testing.T) {
+	g := NewWithT(t)
+	src := main.Configuration{
+		Debug:      1 == r.Intn(1),
+		ServerPort: r.Intn(0xffff),
+		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+		PgDatabase: "edlkjsfd",
+		PgUsername: "sfdjnsfdjlkjsfd",
+		PgPassword: "opoxgdp[koiujiklililhkjg",
+	}
+	expected := strConfigTemplate(&src)
+	path := validRandomPath()
+	file, err := os.Create(path)
+	if err != nil {
+		t.Errorf("Can't open configuration file")
+		return
+	}
+
+	_, err = file.WriteString(strings.Join(expected, "\n"))
+	if err != nil {
+		t.Errorf("Can't write configuration file")
+		return
+	}
+
+	res, err := main.LoadConfiguration(path)
+	if err != nil {
+		t.Errorf("Can't load configuration")
+		return
+	}
+	g.Expect(cmp.Diff(src, *res)).Should(BeEmpty())
 }
