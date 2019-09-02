@@ -15,6 +15,7 @@ import (
 	"github.com/twinj/uuid"
 )
 
+const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
 //App struct
 type App struct {
 	Router *mux.Router
@@ -55,7 +56,6 @@ func (a *App) Run(addr string) {
 
 //InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
-	var routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
 	a.Router.HandleFunc("/", a.Ok).Methods("GET")
 	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
 	a.Router.HandleFunc("/entity", a.CreateEntity).Methods("POST")
