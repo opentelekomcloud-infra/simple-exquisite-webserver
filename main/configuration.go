@@ -18,12 +18,6 @@ type Configuration struct {
 	PgPassword string `yaml:"pg_password"`
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 // LoadConfiguration load configuration from test_config.yml
 func LoadConfiguration(path string) (*Configuration, error) {
 	if path == "" {
