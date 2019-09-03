@@ -18,3 +18,4 @@ before_script:
 
 script:
   - golangci-lint run
+  - go test github.com/outcatcher/simple-exquisite-webserver/main -v
