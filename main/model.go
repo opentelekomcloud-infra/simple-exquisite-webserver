@@ -7,8 +7,8 @@ import (
 )
 
 type entity struct {
-	ID   string `json:"Id"`
-	Data string `json:"Data"`
+	ID   string `json:"uuid"`
+	Data string `json:"data"`
 }
 
 // CreateTable if not exists
@@ -71,7 +71,7 @@ func getEntities(db *sql.DB, start, count int) ([]entity, error) {
 
 	for rows.Next() {
 		var e entity
-		if err := rows.Scan(&e.Data, &e.ID); err != nil {
+		if err := rows.Scan(&e.ID, &e.Data); err != nil {
 			return nil, err
 		}
 		entities = append(entities, e)
