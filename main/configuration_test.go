@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/outcatcher/simple-exquisite-webserver/main"
 )
 
@@ -73,8 +72,14 @@ func strConfigTemplate(src *main.Configuration) []string {
 	}
 }
 
+func errorOnDiff(expected interface{}, actual interface{}, t *testing.T) {
+	diff := cmp.Diff(actual, expected)
+	if diff != "" {
+		t.Errorf("Actual and expected differs: \n%s", diff)
+	}
+}
+
 func TestWriteConfigValidPath(t *testing.T) {
-	g := NewWithT(t)
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
@@ -86,7 +91,7 @@ func TestWriteConfigValidPath(t *testing.T) {
 	var path = validRandomPath()
 	err := src.WriteConfiguration(path)
 	if err != nil {
-		t.Errorf("Can't write configuration")
+		t.Errorf("Can't write Configuration")
 	} else {
 		t.Logf("Config written to %s", path)
 	}
@@ -94,18 +99,17 @@ func TestWriteConfigValidPath(t *testing.T) {
 	targetFile, _ := os.Open(path)
 	buffer, err := ioutil.ReadAll(targetFile)
 	if err != nil {
-		t.Errorf("Can't read configuration file")
+		t.Errorf("Can't read Configuration file")
 	}
 	strBuf := string(buffer)
 
 	data := strings.Split(strings.TrimSpace(strBuf), "\n")
 
 	expected := strConfigTemplate(&src)
-	g.Expect(data).Should(Equal(expected))
+	errorOnDiff(expected, data, t)
 }
 
 func TestLoadConfigValidPath(t *testing.T) {
-	g := NewWithT(t)
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
@@ -118,20 +122,20 @@ func TestLoadConfigValidPath(t *testing.T) {
 	path := validRandomPath()
 	file, err := os.Create(path)
 	if err != nil {
-		t.Errorf("Can't open configuration file")
+		t.Errorf("Can't open Configuration file")
 		return
 	}
 
 	_, err = file.WriteString(strings.Join(expected, "\n"))
 	if err != nil {
-		t.Errorf("Can't write configuration file")
+		t.Errorf("Can't write Configuration file")
 		return
 	}
 
 	res, err := main.LoadConfiguration(path)
 	if err != nil {
-		t.Errorf("Can't load configuration")
+		t.Errorf("Can't load Configuration")
 		return
 	}
-	g.Expect(cmp.Diff(src, *res)).Should(BeEmpty())
+	errorOnDiff(src, *res, t)
 }
