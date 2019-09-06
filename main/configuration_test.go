@@ -91,7 +91,7 @@ func TestWriteConfigValidPath(t *testing.T) {
 	var path = validRandomPath()
 	err := src.WriteConfiguration(path)
 	if err != nil {
-		t.Errorf("Can't write Configuration")
+		t.Errorf("Can't write configuration")
 	} else {
 		t.Logf("Config written to %s", path)
 	}
@@ -99,7 +99,7 @@ func TestWriteConfigValidPath(t *testing.T) {
 	targetFile, _ := os.Open(path)
 	buffer, err := ioutil.ReadAll(targetFile)
 	if err != nil {
-		t.Errorf("Can't read Configuration file")
+		t.Errorf("Can't read configuration file")
 	}
 	strBuf := string(buffer)
 
@@ -122,19 +122,19 @@ func TestLoadConfigValidPath(t *testing.T) {
 	path := validRandomPath()
 	file, err := os.Create(path)
 	if err != nil {
-		t.Errorf("Can't open Configuration file")
+		t.Errorf("Can't open configuration file")
 		return
 	}
 
 	_, err = file.WriteString(strings.Join(expected, "\n"))
 	if err != nil {
-		t.Errorf("Can't write Configuration file")
+		t.Errorf("Can't write configuration file")
 		return
 	}
 
 	res, err := main.LoadConfiguration(path)
 	if err != nil {
-		t.Errorf("Can't load Configuration")
+		t.Errorf("Can't load configuration")
 		return
 	}
 	errorOnDiff(src, *res, t)
