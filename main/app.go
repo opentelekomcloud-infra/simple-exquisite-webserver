@@ -103,7 +103,7 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{ID: id}
+	e := entity{Uuid: id}
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -140,7 +140,7 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 //CreateEntity - with guid generator for Id's
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
-	e.ID = uuid.NewV4().String()
+	e.Uuid = uuid.NewV4().String()
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -168,7 +168,7 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	e.ID = id
+	e.Uuid = id
 
 	if err := e.updateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -183,7 +183,7 @@ func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{ID: id}
+	e := entity{Uuid: id}
 	if err := e.deleteEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
