@@ -21,7 +21,7 @@ func CreatePostgreDBIfNotExist(dbName string, host string, port int, username st
 		return err
 	}
 	rows, err := db.Query("SELECT * FROM pg_database where datname='%s' LIMIT 1", dbName)
-	if (rows == nil) && (err != nil) {
+	if (rows == nil) && (err == nil) {
 		_, err = db.Exec(fmt.Sprintf("create database %s", dbName))
 	}
 	return err

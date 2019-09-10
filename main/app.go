@@ -41,6 +41,7 @@ func (a *App) Initialize(config *Configuration) {
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
 		a.DB, err = sql.Open("postgres", connectionString)
+		CreateTable(a.DB)
 		if err != nil {
 			a.DB, err = sql.Open("postgres", connectionString)
 			if err != nil {
