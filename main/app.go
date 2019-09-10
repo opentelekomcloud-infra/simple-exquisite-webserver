@@ -29,15 +29,23 @@ func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
 		var PgDbURL = config.PgDbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
+		host := dbURLSliced[0]
 		port, err := strconv.Atoi(dbURLSliced[1])
 		if err != nil {
 			log.Fatal(err)
 		}
+		createErr := CreatePostgreDBIfNotExist(config.PgDatabase, host, port, config.PgUsername, config.PgPassword)
+		if createErr != nil {
+			log.Fatalf("Error during db creation: %v", createErr)
+		}
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			dbURLSliced[0], port, config.PgUsername, config.PgPassword, config.PgDatabase)
+			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
 		a.DB, err = sql.Open("postgres", connectionString)
 		if err != nil {
-			log.Fatal(err)
+			a.DB, err = sql.Open("postgres", connectionString)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	} else {
 		a.DB, err = sql.Open("sqlite3", "entities.db")

@@ -3,12 +3,28 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net"
 )
 
 type entity struct {
 	ID   string `json:"uuid"`
 	Data string `json:"data"`
+}
+
+// CreatePostgreDBIfNotExist create new database on given PostgreSQL instance if given DB does not exist on server
+func CreatePostgreDBIfNotExist(dbName string, host string, port int, username string, password string) error {
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, username, password, "postgres")
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return err
+	}
+	rows, err := db.Query("SELECT * FROM pg_database where datname='%s' LIMIT 1", dbName)
+	if (rows == nil) && (err != nil) {
+		_, err = db.Exec(fmt.Sprintf("create database %s", dbName))
+	}
+	return err
 }
 
 // CreateTable if not exists

@@ -18,27 +18,7 @@ type Configuration struct {
 	PgPassword string `yaml:"pg_password"`
 }
 
-// WriteConfiguration write test_config.yml if it not exist with debug or not mode
-func (c *Configuration) WriteConfiguration(path string) error {
-	if path == "" {
-		path = defaultCfgPATH
-	}
-	data, err := yaml.Marshal(&c)
-	if err != nil {
-		return err
-	}
-	_, err = os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// write to file
-			return createNewConfigFile(path, &data)
-		}
-		return err
-	}
-	return nil
-}
-
-// LoadConfiguration load Configuration from test_config.yml
+// LoadConfiguration load configuration from given path
 func LoadConfiguration(path string) (*Configuration, error) {
 	if path == "" {
 		path = defaultCfgPATH
@@ -59,4 +39,24 @@ func createNewConfigFile(path string, data *[]byte) error {
 	_, err = f.Write(*data)
 	_ = f.Close()
 	return err
+}
+
+// WriteConfiguration write test_config.yml if it not exist with debug or not mode
+func (c *Configuration) WriteConfiguration(path string) error {
+	if path == "" {
+		path = defaultCfgPATH
+	}
+	data, err := yaml.Marshal(&c)
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// write to file
+			return createNewConfigFile(path, &data)
+		}
+		return err
+	}
+	return nil
 }

@@ -101,7 +101,7 @@ func TestMain(m *testing.M) {
 func TestNonExistingEntity(t *testing.T) {
 	clearTable()
 
-	req, _ := http.NewRequest("GET", "/entity/5520c7c6-bc87-4c13-a4bd-b682c5a88187", nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/entity/%v", uuid.NewV4()), nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)
@@ -161,7 +161,7 @@ func TestUpdateEntity(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/entities", nil)
 	response := executeRequest(req)
 
-	var originalEntity = []*entity{}
+	var originalEntity []*entity
 	var err = json.Unmarshal(response.Body.Bytes(), &originalEntity)
 	checkErr(err)
 

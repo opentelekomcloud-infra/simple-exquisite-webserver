@@ -18,7 +18,7 @@ import (
 /**
  * Helper functions
  */
-func logerr(n int, err error) {
+func logErr(n int, err error) {
 	if err != nil {
 		log.Printf("Read failed: %v", err)
 	}
@@ -26,14 +26,21 @@ func logerr(n int, err error) {
 
 func validRandomPath() string {
 	randBytes := make([]byte, 10)
-	logerr(rand.Read(randBytes))
+	logErr(rand.Read(randBytes))
 	return filepath.Join(os.TempDir(), "/"+hex.EncodeToString(randBytes)+".yml")
 }
 
 func invalidRandomPath() string {
 	randBytes := make([]byte, 10)
-	logerr(rand.Read(randBytes))
+	logErr(rand.Read(randBytes))
 	return filepath.Join("/" + hex.EncodeToString(randBytes))
+}
+
+func errorOnDiff(expected interface{}, actual interface{}, t *testing.T) {
+	diff := cmp.Diff(actual, expected)
+	if diff != "" {
+		t.Errorf("Actual and expected differs: \n%s", diff)
+	}
 }
 
 /**
@@ -69,13 +76,6 @@ func strConfigTemplate(src *main.Configuration) []string {
 		fmt.Sprintf("pg_database: %v", src.PgDatabase),
 		fmt.Sprintf("pg_username: %v", src.PgUsername),
 		fmt.Sprintf("pg_password: %v", src.PgPassword),
-	}
-}
-
-func errorOnDiff(expected interface{}, actual interface{}, t *testing.T) {
-	diff := cmp.Diff(actual, expected)
-	if diff != "" {
-		t.Errorf("Actual and expected differs: \n%s", diff)
 	}
 }
 
