@@ -3,20 +3,36 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net"
 )
 
 type entity struct {
-	ID   string `json:"Id"`
-	Data string `json:"Data"`
+	Uuid string `json:"uuid"`
+	Data string `json:"data"`
+}
+
+// CreatePostgreDBIfNotExist create new database on given PostgreSQL instance if given DB does not exist on server
+func CreatePostgreDBIfNotExist(dbName string, host string, port int, username string, password string) error {
+	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, username, password, "postgres")
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return err
+	}
+	rows, err := db.Query("SELECT * FROM pg_database WHERE datname=$1 LIMIT 1", dbName)
+	if (rows == nil) && (err == nil) {
+		_, err = db.Exec("CREATE DATABASE $1", dbName)
+	}
+	return err
 }
 
 // CreateTable if not exists
 func CreateTable(db *sql.DB) {
 	sqlTable := `
-	CREATE TABLE IF NOT EXISTS entities(
-		Id TEXT NOT NULL PRIMARY KEY,
-		Data TEXT
+	CREATE TABLE IF NOT EXISTS entity(
+		uuid TEXT NOT NULL PRIMARY KEY,
+		data TEXT
 	);
 	`
 
@@ -27,23 +43,23 @@ func CreateTable(db *sql.DB) {
 }
 
 func (e *entity) getEntity(db *sql.DB) error {
-	return db.QueryRow("SELECT Data FROM entities WHERE Id like ($1)", e.ID).Scan(&e.Data)
+	return db.QueryRow("SELECT data FROM entity WHERE uuid like ($1)", e.Uuid).Scan(&e.Data)
 }
 
 func (e *entity) updateEntity(db *sql.DB) error {
-	_, err := db.Exec("UPDATE entities SET Data=$1 WHERE Id=$2", e.Data, e.ID)
+	_, err := db.Exec("UPDATE entity SET data=$1 WHERE uuid=$2", e.Data, e.Uuid)
 	return err
 }
 
 func (e *entity) deleteEntity(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM entities WHERE Id=$1", e.ID)
+	_, err := db.Exec("DELETE FROM entity WHERE uuid=$1", e.Uuid)
 	return err
 }
 
 func (e *entity) createEntity(db *sql.DB) error {
-	// postgres doesn't return the last inserted ID so this is the workaround
+	// postgres doesn't return the last inserted Uuid so this is the workaround
 	_, err := db.Exec(
-		"INSERT INTO entities(Id, Data) VALUES($1, $2)", e.ID, e.Data)
+		"INSERT INTO entity(uuid, data) VALUES($1, $2)", e.Uuid, e.Data)
 	return err
 }
 
@@ -57,7 +73,7 @@ func isConnectionError(err error) bool {
 }
 
 func getEntities(db *sql.DB, start, count int) ([]entity, error) {
-	rows, err := db.Query("SELECT Id, Data FROM entities LIMIT $1 OFFSET $2", count, start)
+	rows, err := db.Query("SELECT uuid, data FROM entity LIMIT $1 OFFSET $2", count, start)
 	if err != nil {
 		if isConnectionError(err) {
 			return nil, errors.New("can't connect to database")
@@ -71,7 +87,7 @@ func getEntities(db *sql.DB, start, count int) ([]entity, error) {
 
 	for rows.Next() {
 		var e entity
-		if err := rows.Scan(&e.Data, &e.ID); err != nil {
+		if err := rows.Scan(&e.Uuid, &e.Data); err != nil {
 			return nil, err
 		}
 		entities = append(entities, e)

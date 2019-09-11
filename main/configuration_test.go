@@ -12,14 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/outcatcher/simple-exquisite-webserver/main"
 )
 
 /**
  * Helper functions
  */
-func logerr(n int, err error) {
+func logErr(n int, err error) {
 	if err != nil {
 		log.Printf("Read failed: %v", err)
 	}
@@ -27,14 +26,21 @@ func logerr(n int, err error) {
 
 func validRandomPath() string {
 	randBytes := make([]byte, 10)
-	logerr(rand.Read(randBytes))
+	logErr(rand.Read(randBytes))
 	return filepath.Join(os.TempDir(), "/"+hex.EncodeToString(randBytes)+".yml")
 }
 
 func invalidRandomPath() string {
 	randBytes := make([]byte, 10)
-	logerr(rand.Read(randBytes))
+	logErr(rand.Read(randBytes))
 	return filepath.Join("/" + hex.EncodeToString(randBytes))
+}
+
+func errorOnDiff(expected interface{}, actual interface{}, t *testing.T) {
+	diff := cmp.Diff(actual, expected)
+	if diff != "" {
+		t.Errorf("Actual and expected differs: \n%s", diff)
+	}
 }
 
 /**
@@ -74,7 +80,6 @@ func strConfigTemplate(src *main.Configuration) []string {
 }
 
 func TestWriteConfigValidPath(t *testing.T) {
-	g := NewWithT(t)
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
@@ -101,11 +106,10 @@ func TestWriteConfigValidPath(t *testing.T) {
 	data := strings.Split(strings.TrimSpace(strBuf), "\n")
 
 	expected := strConfigTemplate(&src)
-	g.Expect(data).Should(Equal(expected))
+	errorOnDiff(expected, data, t)
 }
 
 func TestLoadConfigValidPath(t *testing.T) {
-	g := NewWithT(t)
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
@@ -133,5 +137,5 @@ func TestLoadConfigValidPath(t *testing.T) {
 		t.Errorf("Can't load configuration")
 		return
 	}
-	g.Expect(cmp.Diff(src, *res)).Should(BeEmpty())
+	errorOnDiff(src, *res, t)
 }

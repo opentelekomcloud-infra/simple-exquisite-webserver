@@ -18,13 +18,13 @@ type Configuration struct {
 	PgPassword string `yaml:"pg_password"`
 }
 
-// LoadConfiguration load configuration from test_config.yml
+// LoadConfiguration load configuration from given path
 func LoadConfiguration(path string) (*Configuration, error) {
 	if path == "" {
 		path = defaultCfgPATH
 	}
 	yamlFile, err := ioutil.ReadFile(path)
-	cfg := Configuration{}
+	cfg := Configuration{ServerPort: 6666}
 	if err == nil {
 		err = yaml.Unmarshal(yamlFile, &cfg)
 	}

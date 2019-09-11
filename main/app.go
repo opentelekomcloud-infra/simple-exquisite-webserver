@@ -29,15 +29,24 @@ func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
 		var PgDbURL = config.PgDbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
+		host := dbURLSliced[0]
 		port, err := strconv.Atoi(dbURLSliced[1])
 		if err != nil {
 			log.Fatal(err)
 		}
+		createErr := CreatePostgreDBIfNotExist(config.PgDatabase, host, port, config.PgUsername, config.PgPassword)
+		if createErr != nil {
+			log.Fatalf("Error during db creation: %v", createErr)
+		}
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			dbURLSliced[0], port, config.PgUsername, config.PgPassword, config.PgDatabase)
+			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
 		a.DB, err = sql.Open("postgres", connectionString)
+		CreateTable(a.DB)
 		if err != nil {
-			log.Fatal(err)
+			a.DB, err = sql.Open("postgres", connectionString)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	} else {
 		a.DB, err = sql.Open("sqlite3", "entities.db")
@@ -89,12 +98,12 @@ func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	logerr(w.Write([]byte("OK")))
 }
 
-//GetEntity by Id
+//GetEntity by Uuid
 func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{ID: id}
+	e := entity{Uuid: id}
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -128,10 +137,10 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, entities)
 }
 
-//CreateEntity - with guid generator for Id's
+//CreateEntity - with guid generator for Uuid's
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	var e entity
-	e.ID = uuid.NewV4().String()
+	e.Uuid = uuid.NewV4().String()
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
@@ -147,34 +156,32 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, e)
 }
 
-//UpdateEntity by Id
+//UpdateEntity by Uuid
 func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
-	var e entity
 	vars := mux.Vars(r)
-	id := vars["id"]
+	data := entity{vars["id"], ""}
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&e); err != nil {
+	if err := decoder.Decode(&data); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 	defer r.Body.Close()
-	e.ID = id
 
-	if err := e.updateEntity(a.DB); err != nil {
+	if err := data.updateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, e)
+	respondWithJSON(w, http.StatusOK, data)
 }
 
-//DeleteEntity by Id
+//DeleteEntity by Uuid
 func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{ID: id}
+	e := entity{Uuid: id}
 	if err := e.deleteEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

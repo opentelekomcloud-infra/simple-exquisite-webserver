@@ -18,14 +18,14 @@ import (
 var a main.App
 
 const tableCreationQuery = `
-CREATE TABLE IF NOT EXISTS entities(
-	Id TEXT NOT NULL PRIMARY KEY,
-	Data TEXT
+CREATE TABLE IF NOT EXISTS entity(
+	uuid TEXT NOT NULL PRIMARY KEY,
+	data TEXT
 );
 `
 
 type entity struct {
-	Id   string
+	Uuid string
 	Data string
 }
 
@@ -39,7 +39,7 @@ func ensureTableExists() {
 }
 
 func clearTable() {
-	if _, err := a.DB.Exec("DELETE FROM entities"); err != nil {
+	if _, err := a.DB.Exec("DELETE FROM entity"); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -53,7 +53,7 @@ func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 
 func checkResponseCode(t *testing.T, expected, actual int) {
 	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
+		t.Fatalf("Expected response code %d. Got %d\n", expected, actual)
 	}
 }
 
@@ -69,7 +69,11 @@ func addEntities(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		if _, err := a.DB.Exec("INSERT INTO entities(Id, Data) VALUES($1, $2)", "Data "+strconv.Itoa(i), uuid.NewV4().String()); err != nil {
+		_, err := a.DB.Exec("INSERT INTO entity(data, uuid) VALUES($1, $2)",
+			"Data "+strconv.Itoa(i),
+			uuid.NewV4().String(),
+		)
+		if err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -101,7 +105,7 @@ func TestMain(m *testing.M) {
 func TestNonExistingEntity(t *testing.T) {
 	clearTable()
 
-	req, _ := http.NewRequest("GET", "/entity/5520c7c6-bc87-4c13-a4bd-b682c5a88187", nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/entity/%v", uuid.NewV4()), nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)
@@ -117,8 +121,7 @@ func TestNonExistingEntity(t *testing.T) {
 
 func TestCreateEntity(t *testing.T) {
 	clearTable()
-	var id = uuid.NewV4().String()
-	payload := []byte((fmt.Sprintf(`{"Data": "test data", "Id": "%s"}`, id)))
+	payload := []byte(`{"data": "test data"}`)
 	req, _ := http.NewRequest("POST", "/entity", bytes.NewBuffer(payload))
 	response := executeRequest(req)
 
@@ -127,14 +130,9 @@ func TestCreateEntity(t *testing.T) {
 	var m map[string]interface{}
 	var err = json.Unmarshal(response.Body.Bytes(), &m)
 	checkErr(err)
-	if m["Data"] != "test data" {
-		t.Errorf("Expected product Data to be 'test data'. Got '%v'", m["Data"])
+	if m["data"] != "test data" {
+		t.Errorf("Expected product Data to be 'test data'. Got '%v'", m["data"])
 	}
-
-	if m["Id"] != id {
-		t.Errorf("Expected product Id to be '%s'. Got '%v'", id, m["Id"])
-	}
-
 }
 
 func TestGetRoot(t *testing.T) {
@@ -161,12 +159,13 @@ func TestUpdateEntity(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/entities", nil)
 	response := executeRequest(req)
 
-	var originalEntity = []*entity{}
+	var originalEntity []*entity
 	var err = json.Unmarshal(response.Body.Bytes(), &originalEntity)
 	checkErr(err)
 
-	payload := []byte((fmt.Sprintf(`{"Data": "test data - updated", "Id": "%s"}`, originalEntity[0].Id)))
-	updateRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Id)
+	single := *originalEntity[0]
+	payload := []byte(`{"data": "test data - updated"}`)
+	updateRoute := fmt.Sprintf("/entity/%s", single.Uuid)
 	req, _ = http.NewRequest("PUT", updateRoute, bytes.NewBuffer(payload))
 	response = executeRequest(req)
 
@@ -176,12 +175,12 @@ func TestUpdateEntity(t *testing.T) {
 	err = json.Unmarshal(response.Body.Bytes(), &m)
 	checkErr(err)
 
-	if m["Id"] != originalEntity[0].Id {
-		t.Errorf("Expected the id to remain the same (%v). Got %v", originalEntity[0].Id, m["Id"])
+	if m["uuid"] != single.Uuid {
+		t.Errorf("Expected the id to remain the same (%v). Got %v", single.Uuid, m["uuid"])
 	}
 
-	if m["Data"] == originalEntity[0].Data {
-		t.Errorf("Expected the name to change from '%v' to '%v'. Got '%v'", originalEntity[0].Data, m["Data"], m["Data"])
+	if m["data"] == single.Data {
+		t.Errorf("Expected the name to change from '%v' to '%v'. Got '%v'", single.Data, m["data"], m["data"])
 	}
 
 }
@@ -199,13 +198,13 @@ func TestDeleteEntity(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	deleteRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Id)
+	deleteRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Uuid)
 	req, _ = http.NewRequest("DELETE", deleteRoute, nil)
 	response = executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	getRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Id)
+	getRoute := fmt.Sprintf("/entity/%s", originalEntity[0].Uuid)
 	req, _ = http.NewRequest("GET", getRoute, nil)
 	response = executeRequest(req)
 	checkResponseCode(t, http.StatusNotFound, response.Code)
