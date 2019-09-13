@@ -12,7 +12,7 @@ import (
 
 func allowedDir(path string) bool {
 	fileName := filepath.Join(path, "tmp.tmp")
-	_ = os.MkdirAll(path, 744)
+	_ = os.MkdirAll(path, 0744)
 	f, err := os.Create(fileName)
 	if err != nil {
 		return false
@@ -90,7 +90,10 @@ func main() {
 	if d != nil { // this is parent process
 		return
 	}
-	defer context.Release()
+	defer func() {
+		err = context.Release()
+		log.Println("Error on closing: ", err)
+	}()
 
 	log.Println("Daemon started")
 

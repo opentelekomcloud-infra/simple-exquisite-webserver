@@ -39,7 +39,7 @@ func LoadConfiguration(path string) (*Configuration, error) {
 }
 
 func createNewConfigFile(path string, data *[]byte) error {
-	_ = os.MkdirAll(filepath.Dir(path), 744)
+	_ = os.MkdirAll(filepath.Dir(path), 0744)
 	f, err := os.Create(path)
 	if err != nil {
 		return err
