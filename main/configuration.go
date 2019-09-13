@@ -4,9 +4,16 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
-const defaultCfgPATH = "config.yml"
+func getUserDir() string {
+	res, _ := os.UserHomeDir()
+	return res
+}
+
+var defaultUserDir = filepath.Join(getUserDir(), ".too-simple")
+var defaultCfgPATH = filepath.Join(defaultUserDir, "config.yml")
 
 // Configuration file structure
 type Configuration struct {
@@ -32,6 +39,7 @@ func LoadConfiguration(path string) (*Configuration, error) {
 }
 
 func createNewConfigFile(path string, data *[]byte) error {
+	_ = os.MkdirAll(filepath.Dir(path), 744)
 	f, err := os.Create(path)
 	if err != nil {
 		return err
