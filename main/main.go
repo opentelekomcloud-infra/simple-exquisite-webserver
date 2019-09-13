@@ -15,7 +15,6 @@ func allowedDir(path string) bool {
 	_ = os.MkdirAll(path, 744)
 	f, err := os.Create(fileName)
 	if err != nil {
-		log.Print(err)
 		return false
 	}
 	_ = f.Close()
@@ -28,11 +27,6 @@ func selectDir(preferred string, backup string) string {
 		return preferred
 	}
 	return backup
-}
-
-func termHandler(sig os.Signal) error {
-	log.Println("terminating...")
-	return daemon.ErrStop
 }
 
 func main() {
@@ -70,9 +64,7 @@ func main() {
 		PidFileName: filepath.Join(selectDir("/tmp", defaultUserDir), "too-simple.pid"),
 		PidFilePerm: 0644,
 		LogFileName: filepath.Join(selectDir("/var/log/too-simple", defaultUserDir), "execution.log"),
-		LogFilePerm: 0,
-		WorkDir:     "~/.too-simple",
-		Chroot:      "",
+		LogFilePerm: 0640,
 	}
 
 	if len(daemon.ActiveFlags()) > 0 {
