@@ -29,6 +29,11 @@ func selectDir(preferred string, backup string) string {
 	return backup
 }
 
+func termHandler(sig os.Signal) error {
+	log.Println("terminating...")
+	return daemon.ErrStop
+}
+
 func main() {
 	debug := flag.Bool("debug", false, "Enable usage of local database. Taken from config file by default")
 	configurationPath := flag.String("config", "", "Set location of Configuration file")
