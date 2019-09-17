@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -66,6 +67,7 @@ func (a *App) Run(addr string) {
 
 //InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
+	a.Router.Use(addServerHeaderMiddle)
 	a.Router.HandleFunc("/", a.Ok).Methods("GET")
 	a.Router.HandleFunc("/entities", a.GetEntities).Methods("GET")
 	a.Router.HandleFunc("/entity", a.CreateEntity).Methods("POST")
@@ -74,7 +76,15 @@ func (a *App) InitializeRoutes() {
 	a.Router.HandleFunc(routeUUID4, a.DeleteEntity).Methods("DELETE")
 }
 
-func logerr(n int, err error) {
+func addServerHeaderMiddle(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hostname, _ := os.Hostname()
+		w.Header().Set("Server", hostname)
+		h.ServeHTTP(w, r)
+	})
+}
+
+func logerr(_ int, err error) {
 	if err != nil {
 		log.Printf("Write failed: %v", err)
 	}
