@@ -1,11 +1,15 @@
 # Simple Exquisite Webserver
 [![Build Status](https://travis-ci.org/outcatcher/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/outcatcher/simple-exquisite-webserver)
 
-This is single-purpose web server having 2 endpoints:
+This is single-purpose web server having following endpoints:
+
+`/` — always returns http code `200`, can be used to validate if server is up and running
 
 `/entities` — for listing all existing entities
 
 `/entity`, `/entity/<uuid>` — for creating and retrieving existing entities
+
+Every server response contains `Server` header with value equal to host name 
 
 Server can use either debug sqlite DB or PostgreSQL database
 
