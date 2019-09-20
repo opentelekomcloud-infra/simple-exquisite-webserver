@@ -1,5 +1,5 @@
 # Simple Exquisite Webserver
-[![Build Status](https://travis-ci.org/outcatcher/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/outcatcher/simple-exquisite-webserver)
+[![Build Status](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver)
 
 This is single-purpose web server having following endpoints:
 
