@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/DATA-DOG/go-sqlmock"
 	"log"
 	"net/http"
 	"os"
@@ -45,7 +44,7 @@ func (a *App) Initialize(config *Configuration) {
 			log.Fatal(err)
 		}
 	} else {
-		a.DB, _, _ = sqlmock.New()
+		a.DB, _ = sql.Open("fake", "fake_db_0")
 	}
 	CreateTable(a.DB)
 	a.Router = mux.NewRouter()
