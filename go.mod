@@ -1,4 +1,4 @@
-module github.com/outcatcher/simple-exquisite-webserver
+module github.com/opentelekomcloud-infra/simple-exquisite-webserver
 
 go 1.12
 

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/outcatcher/simple-exquisite-webserver/main"
+	"github.com/opentelekomcloud-infra/simple-exquisite-webserver/main"
 	"github.com/twinj/uuid"
 )
 
