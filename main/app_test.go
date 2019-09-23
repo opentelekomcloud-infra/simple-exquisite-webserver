@@ -17,20 +17,13 @@ import (
 
 var a main.App
 
-const tableCreationQuery = `
-CREATE TABLE IF NOT EXISTS entity(
-	uuid TEXT NOT NULL PRIMARY KEY,
-	data TEXT
-);
-`
-
 type entity struct {
 	Uuid string
 	Data string
 }
 
 func clearTable() {
-	main.FakeClean()
+	main.FakeDataStorage = map[string]main.Entity{}
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {

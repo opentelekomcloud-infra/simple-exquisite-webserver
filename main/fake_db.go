@@ -6,10 +6,6 @@ import (
 
 var FakeDataStorage map[string]Entity
 
-func FakeClean() {
-	FakeDataStorage = map[string]Entity{}
-}
-
 func FakeGet(e *Entity) error {
 	ent, ok := FakeDataStorage[e.Uuid]
 	if !ok {
