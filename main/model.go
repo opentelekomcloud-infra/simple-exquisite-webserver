@@ -7,7 +7,7 @@ import (
 	"net"
 )
 
-type entity struct {
+type Entity struct {
 	Uuid string `json:"uuid"`
 	Data string `json:"data"`
 }
@@ -29,6 +29,9 @@ func CreatePostgreDBIfNotExist(dbName string, host string, port int, username st
 
 // CreateTable if not exists
 func CreateTable(db *sql.DB) {
+	if db == nil {
+		return
+	}
 	sqlTable := `
 	CREATE TABLE IF NOT EXISTS entity(
 		uuid TEXT NOT NULL PRIMARY KEY,
@@ -42,21 +45,37 @@ func CreateTable(db *sql.DB) {
 	}
 }
 
-func (e *entity) getEntity(db *sql.DB) error {
+func (e *Entity) getEntity(db *sql.DB) error {
+	if db == nil {
+		return FakeGet(e)
+	}
+
 	return db.QueryRow("SELECT data FROM entity WHERE uuid like ($1)", e.Uuid).Scan(&e.Data)
 }
 
-func (e *entity) updateEntity(db *sql.DB) error {
+func (e *Entity) updateEntity(db *sql.DB) error {
+	if db == nil {
+		return FakeUpdate(e)
+	}
+
 	_, err := db.Exec("UPDATE entity SET data=$1 WHERE uuid=$2", e.Data, e.Uuid)
 	return err
 }
 
-func (e *entity) deleteEntity(db *sql.DB) error {
+func (e *Entity) deleteEntity(db *sql.DB) error {
+	if db == nil {
+		return FakeDel(e)
+	}
+
 	_, err := db.Exec("DELETE FROM entity WHERE uuid=$1", e.Uuid)
 	return err
 }
 
-func (e *entity) createEntity(db *sql.DB) error {
+func (e *Entity) createEntity(db *sql.DB) error {
+	if db == nil {
+		return FakeNew(e)
+	}
+
 	// postgres doesn't return the last inserted Uuid so this is the workaround
 	_, err := db.Exec(
 		"INSERT INTO entity(uuid, data) VALUES($1, $2)", e.Uuid, e.Data)
@@ -72,7 +91,11 @@ func isConnectionError(err error) bool {
 	}
 }
 
-func getEntities(db *sql.DB, start, count int) ([]entity, error) {
+func getEntities(db *sql.DB, start, count int) ([]Entity, error) {
+	if db == nil {
+		return FakeList(count, start)
+	}
+
 	rows, err := db.Query("SELECT uuid, data FROM entity LIMIT $1 OFFSET $2", count, start)
 	if err != nil {
 		if isConnectionError(err) {
@@ -81,12 +104,14 @@ func getEntities(db *sql.DB, start, count int) ([]entity, error) {
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
-	var entities []entity
+	var entities []Entity
 
 	for rows.Next() {
-		var e entity
+		var e Entity
 		if err := rows.Scan(&e.Uuid, &e.Data); err != nil {
 			return nil, err
 		}

@@ -5,8 +5,8 @@ go 1.12
 require (
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/mux v1.7.3
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/lib/pq v1.2.0
-	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/myesui/uuid v1.0.0 // indirect
 	github.com/sevlyar/go-daemon v0.1.5
 	github.com/twinj/uuid v1.0.0

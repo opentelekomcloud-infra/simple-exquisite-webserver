@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/twinj/uuid"
 )
 
@@ -26,7 +25,6 @@ type App struct {
 
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
-	var err error
 	if !config.Debug {
 		var PgDbURL = config.PgDbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
@@ -42,20 +40,13 @@ func (a *App) Initialize(config *Configuration) {
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
 		a.DB, err = sql.Open("postgres", connectionString)
-		CreateTable(a.DB)
-		if err != nil {
-			a.DB, err = sql.Open("postgres", connectionString)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	} else {
-		a.DB, err = sql.Open("sqlite3", "entities.db")
 		if err != nil {
 			log.Fatal(err)
 		}
-		CreateTable(a.DB)
+	} else {
+		a.DB = nil
 	}
+	CreateTable(a.DB)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }
@@ -113,7 +104,7 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{Uuid: id}
+	e := Entity{Uuid: id}
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
@@ -149,14 +140,14 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 
 //CreateEntity - with guid generator for Uuid's
 func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
-	var e entity
+	var e Entity
 	e.Uuid = uuid.NewV4().String()
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if err := e.createEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -169,14 +160,14 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 //UpdateEntity by Uuid
 func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	data := entity{vars["id"], ""}
+	data := Entity{vars["id"], ""}
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&data); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if err := data.updateEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -191,7 +182,7 @@ func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	e := entity{Uuid: id}
+	e := Entity{Uuid: id}
 	if err := e.deleteEntity(a.DB); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

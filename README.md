@@ -11,7 +11,7 @@ This is single-purpose web server having following endpoints:
 
 Every server response contains `Server` header with value equal to host name 
 
-Server can use either debug sqlite DB or PostgreSQL database
+Server can use PostgreSQL database
 
 Server configuration is done with configuration yaml file:
 ```yaml
@@ -27,4 +27,5 @@ pg_password: 'qwertyui!'
 Default location of configuration file is `/etc/too-simple/config.yml`,
 this can be changed using `--config` argument 
 
-Debug mode is switched using `--debug` argument and enabled by default
+Debug mode is switched using `--debug` argument or setting `debug: true` in configuration.
+When debug is on, no database will be used.
