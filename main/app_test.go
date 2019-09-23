@@ -29,19 +29,8 @@ type entity struct {
 	Data string
 }
 
-/**
- * Helper functions
- */
-func ensureTableExists() {
-	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func clearTable() {
-	if _, err := a.DB.Exec("DELETE FROM entity"); err != nil {
-		log.Fatal(err)
-	}
+	main.FakeClean()
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -69,10 +58,11 @@ func addEntities(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		_, err := a.DB.Exec("INSERT INTO entity(data, uuid) VALUES($1, $2)",
-			"Data "+strconv.Itoa(i),
-			uuid.NewV4().String(),
-		)
+		err := main.FakeNew(&main.Entity{
+			Uuid: uuid.NewV4().String(),
+			Data: "Data " + strconv.Itoa(i),
+		})
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -92,8 +82,6 @@ func TestMain(m *testing.M) {
 	}
 	config.Debug = true
 	a.Initialize(config)
-
-	ensureTableExists()
 
 	code := m.Run()
 
