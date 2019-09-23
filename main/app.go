@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/DATA-DOG/go-sqlmock"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/twinj/uuid"
 )
 
@@ -26,7 +26,6 @@ type App struct {
 
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
-	var err error
 	if !config.Debug {
 		var PgDbURL = config.PgDbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
@@ -42,20 +41,13 @@ func (a *App) Initialize(config *Configuration) {
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
 		a.DB, err = sql.Open("postgres", connectionString)
-		CreateTable(a.DB)
-		if err != nil {
-			a.DB, err = sql.Open("postgres", connectionString)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	} else {
-		a.DB, err = sql.Open("sqlite3", "entities.db")
 		if err != nil {
 			log.Fatal(err)
 		}
-		CreateTable(a.DB)
+	} else {
+		a.DB, _, _ = sqlmock.New()
 	}
+	CreateTable(a.DB)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }
