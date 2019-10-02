@@ -47,6 +47,22 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetOutput(os.Stdout)
 
+	context := &daemon.Context{
+		PidFileName: filepath.Join(selectDir("/tmp", defaultUserDir), "too-simple.pid"),
+		PidFilePerm: 0644,
+		LogFileName: filepath.Join(selectDir("/var/log/too-simple", defaultUserDir), "execution.log"),
+		LogFilePerm: 0640,
+	}
+
+	if len(daemon.ActiveFlags()) > 0 {
+		dProcess, err := context.Search()
+		if err != nil {
+			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
+		}
+		_ = daemon.SendCommands(dProcess)
+		return
+	}
+	
 	a := App{}
 
 	cfgPath := *configurationPath
@@ -64,22 +80,6 @@ func main() {
 	log.Print("Load config\n")
 	a.Initialize(config)
 	log.Print("Init app\n")
-
-	context := &daemon.Context{
-		PidFileName: filepath.Join(selectDir("/tmp", defaultUserDir), "too-simple.pid"),
-		PidFilePerm: 0644,
-		LogFileName: filepath.Join(selectDir("/var/log/too-simple", defaultUserDir), "execution.log"),
-		LogFilePerm: 0640,
-	}
-
-	if len(daemon.ActiveFlags()) > 0 {
-		dProcess, err := context.Search()
-		if err != nil {
-			log.Fatalf("Unable send signal to the daemon: %s", err.Error())
-		}
-		_ = daemon.SendCommands(dProcess)
-		return
-	}
 
 	d, err := context.Reborn()
 	if err != nil {
