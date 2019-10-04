@@ -31,6 +31,7 @@ func selectDir(preferred string, backup string) string {
 
 func termHandler(sig os.Signal) error {
 	log.Println("terminating...")
+
 	return daemon.ErrStop
 }
 
@@ -62,7 +63,7 @@ func main() {
 		_ = daemon.SendCommands(dProcess)
 		return
 	}
-	
+
 	a := App{}
 
 	cfgPath := *configurationPath
@@ -97,5 +98,10 @@ func main() {
 
 	log.Println("Daemon started")
 
-	a.Run(fmt.Sprintf(":%v", config.ServerPort))
+	go a.Run(fmt.Sprintf(":%v", config.ServerPort))
+
+	err = daemon.ServeSignals()
+	if err != nil {
+		log.Printf("Error: %s", err.Error())
+	}
 }
