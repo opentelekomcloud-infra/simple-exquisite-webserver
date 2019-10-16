@@ -18,7 +18,7 @@ import (
 /**
  * Helper functions
  */
-func logErr(n int, err error) {
+func logErr(_ int, err error) {
 	if err != nil {
 		log.Printf("Read failed: %v", err)
 	}
@@ -69,24 +69,38 @@ func TestLoadConfigErrorOnInvalidFilepath(t *testing.T) {
 var r = rand.New(rand.NewSource(0))
 
 func strConfigTemplate(src *main.Configuration) []string {
-	return []string{
+	res := []string{
 		fmt.Sprintf("debug: %v", src.Debug),
 		fmt.Sprintf("server_port: %v", src.ServerPort),
-		fmt.Sprintf("pg_db_url: %v", src.PgDbURL),
-		fmt.Sprintf("pg_database: %v", src.PgDatabase),
-		fmt.Sprintf("pg_username: %v", src.PgUsername),
-		fmt.Sprintf("pg_password: %v", src.PgPassword),
 	}
+	if src.Postgres != nil {
+		res = append(res,
+			"postgres:", fmt.Sprintf("  db_url: %v", src.Postgres.DbURL),
+			fmt.Sprintf("  database: %s", src.Postgres.Database),
+			fmt.Sprintf("  username: %s", src.Postgres.Username),
+			fmt.Sprintf("  password: %s", src.Postgres.Password),
+		)
+	}
+	if src.Telegraf != nil {
+		res = append(res,
+			"telegraf:",
+			fmt.Sprintf("  enabled: %t", src.Telegraf.Enabled),
+			fmt.Sprintf("  url: %s", src.Telegraf.Url),
+		)
+	}
+	return res
 }
 
-func TestWriteConfigValidPath(t *testing.T) {
+func TestWriteConfigValidPathPg(t *testing.T) {
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
-		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-		PgDatabase: "edlkjsfd",
-		PgUsername: "sfdjnsfdjlkjsfd",
-		PgPassword: "opoxgdp[koiujiklililhkjg",
+		Postgres: &main.PostgresConfig{
+			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+			Database: "edlkjsfd",
+			Username: "sfdjnsfdjlkjsfd",
+			Password: "opoxgdp[koiujiklililhkjg",
+		},
 	}
 	var path = validRandomPath()
 	err := src.WriteConfiguration(path)
@@ -109,14 +123,77 @@ func TestWriteConfigValidPath(t *testing.T) {
 	errorOnDiff(expected, data, t)
 }
 
-func TestLoadConfigValidPath(t *testing.T) {
+func TestWriteConfigValidPathTf(t *testing.T) {
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
-		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-		PgDatabase: "edlkjsfd",
-		PgUsername: "sfdjnsfdjlkjsfd",
-		PgPassword: "opoxgdp[koiujiklililhkjg",
+		Postgres: &main.PostgresConfig{
+			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+			Database: "edlkjsfd",
+			Username: "sfdjnsfdjlkjsfd",
+			Password: "opoxgdp[koiujiklililhkjg",
+		},
+	}
+	var path = validRandomPath()
+	err := src.WriteConfiguration(path)
+	if err != nil {
+		t.Errorf("Can't write configuration")
+	} else {
+		t.Logf("Config written to %s", path)
+	}
+
+	targetFile, _ := os.Open(path)
+	buffer, err := ioutil.ReadAll(targetFile)
+	if err != nil {
+		t.Errorf("Can't read configuration file")
+	}
+	strBuf := string(buffer)
+
+	data := strings.Split(strings.TrimSpace(strBuf), "\n")
+
+	expected := strConfigTemplate(&src)
+	errorOnDiff(expected, data, t)
+}
+
+func TestLoadConfigValidPathPg(t *testing.T) {
+	src := main.Configuration{
+		Debug:      1 == r.Intn(1),
+		ServerPort: r.Intn(0xffff),
+		Telegraf: &main.TelegrafConfig{
+			Enabled: true,
+			Url:     "https://my.server.com/telegraf",
+		},
+	}
+	expected := strConfigTemplate(&src)
+	path := validRandomPath()
+	file, err := os.Create(path)
+	if err != nil {
+		t.Errorf("Can't open configuration file")
+		return
+	}
+
+	_, err = file.WriteString(strings.Join(expected, "\n"))
+	if err != nil {
+		t.Errorf("Can't write configuration file")
+		return
+	}
+
+	res, err := main.LoadConfiguration(path)
+	if err != nil {
+		t.Errorf("Can't load configuration")
+		return
+	}
+	errorOnDiff(src, *res, t)
+}
+
+func TestLoadConfigValidPathTf(t *testing.T) {
+	src := main.Configuration{
+		Debug:      1 == r.Intn(1),
+		ServerPort: r.Intn(0xffff),
+		Telegraf: &main.TelegrafConfig{
+			Enabled: true,
+			Url:     "https://my.server.com/telegraf",
+		},
 	}
 	expected := strConfigTemplate(&src)
 	path := validRandomPath()

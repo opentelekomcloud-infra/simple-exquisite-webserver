@@ -26,19 +26,19 @@ type App struct {
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
-		var PgDbURL = config.PgDbURL
+		var PgDbURL = config.Postgres.DbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
 		host := dbURLSliced[0]
 		port, err := strconv.Atoi(dbURLSliced[1])
 		if err != nil {
 			log.Fatal(err)
 		}
-		createErr := CreatePostgreDBIfNotExist(config.PgDatabase, host, port, config.PgUsername, config.PgPassword)
+		createErr := CreatePostgreDBIfNotExist(config.Postgres.Database, host, port, config.Postgres.Username, config.Postgres.Database)
 		if createErr != nil {
 			log.Fatalf("Error during db creation: %v", createErr)
 		}
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
+			host, port, config.Postgres.Username, config.Postgres.Password, config.Postgres.Database)
 		a.DB, err = sql.Open("postgres", connectionString)
 		if err != nil {
 			log.Fatal(err)
