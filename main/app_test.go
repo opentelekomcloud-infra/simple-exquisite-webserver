@@ -190,3 +190,19 @@ func TestDeleteEntity(t *testing.T) {
 	response = executeRequest(req)
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
+
+func TestBulkDataGeneration(t *testing.T) {
+	count := 10000
+	size := 13
+	entities := main.CreateSomeEntities(count, size)
+	rReal := len(entities)
+	if rReal != count {
+		t.Errorf("%d entities instead of %d", count, rReal)
+	}
+	for i := 0; i < count; i++ {
+		data := entities[i].Data
+		if len(data) != size {
+			t.Errorf("One of entities size is not %d: %v", size, data)
+		}
+	}
+}

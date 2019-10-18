@@ -17,5 +17,5 @@ before_script:
   - go install github.com/golangci/golangci-lint/cmd/golangci-lint
 
 script:
-  - golangci-lint run
+  - golangci-lint run -D unused,deadcode
   - go test github.com/opentelekomcloud-infra/simple-exquisite-webserver/main -v
