@@ -120,13 +120,9 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 //GetEntities method
 func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.URL.Query().Get("count"))
-	start, _ := strconv.Atoi(r.FormValue("start"))
 
 	if count > 10 || count < 1 {
 		count = 10
-	}
-	if start < 0 {
-		start = 0
 	}
 
 	entities, err := getEntities(a.DB, count, "%")

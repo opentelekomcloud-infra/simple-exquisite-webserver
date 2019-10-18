@@ -36,7 +36,7 @@ func CreatePostgreDBIfNotExist(dbName string, host string, port int, username st
 		pattern := "^[a-zA-Z_]+$"
 		seemsOk, _ := regexp.MatchString(pattern, dbName)
 		if !seemsOk {
-			return errors.New(fmt.Sprintf("Invalid database name: %s. Database name must match %s pattern", dbName, pattern))
+			return fmt.Errorf("invalid database name: %s. Database name must match %s pattern", dbName, pattern)
 		}
 		_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName)) // This is insecure, but it won't work other way
 	}
