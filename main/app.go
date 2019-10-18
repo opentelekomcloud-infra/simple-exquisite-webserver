@@ -129,7 +129,7 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	entities, err := getEntities(a.DB, start, count)
+	entities, err := getEntities(a.DB, count, "%")
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

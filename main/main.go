@@ -10,6 +10,8 @@ import (
 	"syscall"
 )
 
+const version = "0.3.3"
+
 func allowedDir(path string) bool {
 	fileName := filepath.Join(path, "tmp.tmp")
 	_ = os.MkdirAll(path, 0744)
@@ -37,8 +39,15 @@ func termHandler(sig os.Signal) error {
 
 func main() {
 	debug := flag.Bool("debug", false, "Enable usage of local database. Taken from config file by default")
+	showVersion := flag.Bool("showVersion", false, "Print application showVersion")
 	configurationPath := flag.String("config", "", "Set location of Configuration file")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
 	action := "start"
 	if flag.NArg() > 0 { // in case there is positional argument
 		action = flag.Arg(0)
