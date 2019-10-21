@@ -23,6 +23,14 @@ type App struct {
 	DB     *sql.DB
 }
 
+func generateRandomInitData(db *sql.DB) {
+	ents := CreateSomeEntities(10000, 20000)
+	err := AddEntities(db, ents)
+	if err != nil {
+		log.Println("Can't fill database with initial data")
+	}
+}
+
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
@@ -47,6 +55,7 @@ func (a *App) Initialize(config *Configuration) {
 		a.DB = nil
 	}
 	CreateTable(a.DB)
+	go generateRandomInitData(a.DB)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }
@@ -96,7 +105,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 //Ok answer for root calls
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	logerr(w.Write([]byte("OK")))
+	logerr(w.Write(randomByteSlice(10, "OK", "0123456789abcdef")))
 }
 
 //GetEntity by Uuid

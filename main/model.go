@@ -4,19 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/twinj/uuid"
 	"log"
-	"math/rand"
 	"net"
 	"regexp"
-	"time"
-	"unsafe"
 )
-
-type Entity struct {
-	Uuid string `json:"uuid"`
-	Data string `json:"data"`
-}
 
 // CreatePostgreDBIfNotExist create new database on given PostgreSQL instance if given DB does not exist on server
 func CreatePostgreDBIfNotExist(dbName string, host string, port int, username string, password string) error {
@@ -98,43 +89,7 @@ func (e *Entity) createEntity(db *sql.DB) error {
 	return err
 }
 
-const DataRandCS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ :;~`\\|/?.,<>{}()&*%$#@"
-
-var src = rand.NewSource(time.Now().UnixNano())
-
-func randomString(size int, prefix string) string {
-	pLen := len(prefix)
-	result := make([]byte, size)
-	for i := 0; i < pLen; i++ {
-		result[i] = prefix[i]
-	}
-	for i := pLen; i < size; i++ {
-		result[i] = DataRandCS[src.Int63()%int64(len(DataRandCS))]
-	}
-	return *(*string)(unsafe.Pointer(&result)) // faster way to convert big slice to string
-}
-
-//CreateSomeEntities create `count` of random entities with given chars in data (20000 by default)
-func CreateSomeEntities(count int, dataSize ...int) []Entity {
-	size := 20000
-	var data = make([]Entity, count)
-	startTime := time.Now().Unix()
-	if len(dataSize) > 0 {
-		size = dataSize[0]
-	}
-	for i := 0; i < count; i++ {
-		func() {
-			data[i] = Entity{
-				Uuid: uuid.NewV4().String(),
-				Data: randomString(size, "RANDOM DATA: "),
-			}
-		}()
-	}
-	log.Print("Waiting for data to be generated...")
-	log.Printf("Generated data in %vs", time.Now().Unix()-startTime)
-	return data
-}
-
+//AddEntities — add multiple entities in single transaction
 func AddEntities(db *sql.DB, entities []Entity) error {
 	tx, err := db.Begin()
 	if err != nil {
