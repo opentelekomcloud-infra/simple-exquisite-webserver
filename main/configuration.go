@@ -22,17 +22,11 @@ type PostgresConfig struct {
 	Password string `yaml:"password"`
 }
 
-type TelegrafConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Url     string `yaml:"url"`
-}
-
 // Configuration file structure
 type Configuration struct {
 	Debug      bool            `yaml:"debug"`
 	ServerPort int             `yaml:"server_port"`
 	Postgres   *PostgresConfig `yaml:"postgres,omitempty"`
-	Telegraf   *TelegrafConfig `yaml:"telegraf,omitempty"`
 }
 
 // LoadConfiguration load configuration from given path

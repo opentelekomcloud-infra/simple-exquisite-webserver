@@ -81,13 +81,6 @@ func strConfigTemplate(src *main.Configuration) []string {
 			fmt.Sprintf("  password: %s", src.Postgres.Password),
 		)
 	}
-	if src.Telegraf != nil {
-		res = append(res,
-			"telegraf:",
-			fmt.Sprintf("  enabled: %t", src.Telegraf.Enabled),
-			fmt.Sprintf("  url: %s", src.Telegraf.Url),
-		)
-	}
 	return res
 }
 
@@ -123,7 +116,7 @@ func TestWriteConfigValidPathPg(t *testing.T) {
 	errorOnDiff(expected, data, t)
 }
 
-func TestWriteConfigValidPathTf(t *testing.T) {
+func TestLoadConfigValidPathPg(t *testing.T) {
 	src := main.Configuration{
 		Debug:      1 == r.Intn(1),
 		ServerPort: r.Intn(0xffff),
@@ -132,67 +125,6 @@ func TestWriteConfigValidPathTf(t *testing.T) {
 			Database: "edlkjsfd",
 			Username: "sfdjnsfdjlkjsfd",
 			Password: "opoxgdp[koiujiklililhkjg",
-		},
-	}
-	var path = validRandomPath()
-	err := src.WriteConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't write configuration")
-	} else {
-		t.Logf("Config written to %s", path)
-	}
-
-	targetFile, _ := os.Open(path)
-	buffer, err := ioutil.ReadAll(targetFile)
-	if err != nil {
-		t.Errorf("Can't read configuration file")
-	}
-	strBuf := string(buffer)
-
-	data := strings.Split(strings.TrimSpace(strBuf), "\n")
-
-	expected := strConfigTemplate(&src)
-	errorOnDiff(expected, data, t)
-}
-
-func TestLoadConfigValidPathPg(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
-		ServerPort: r.Intn(0xffff),
-		Telegraf: &main.TelegrafConfig{
-			Enabled: true,
-			Url:     "https://my.server.com/telegraf",
-		},
-	}
-	expected := strConfigTemplate(&src)
-	path := validRandomPath()
-	file, err := os.Create(path)
-	if err != nil {
-		t.Errorf("Can't open configuration file")
-		return
-	}
-
-	_, err = file.WriteString(strings.Join(expected, "\n"))
-	if err != nil {
-		t.Errorf("Can't write configuration file")
-		return
-	}
-
-	res, err := main.LoadConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't load configuration")
-		return
-	}
-	errorOnDiff(src, *res, t)
-}
-
-func TestLoadConfigValidPathTf(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
-		ServerPort: r.Intn(0xffff),
-		Telegraf: &main.TelegrafConfig{
-			Enabled: true,
-			Url:     "https://my.server.com/telegraf",
 		},
 	}
 	expected := strConfigTemplate(&src)
