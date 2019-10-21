@@ -28,13 +28,17 @@ func randomByteSlice(size int, prefix string, charset string) []byte {
 	return result
 }
 
-func randomString(size int, prefix string) string {
-	result := randomByteSlice(size, prefix, DataRandCS)
+func RandomString(size int, prefix string, charset ...string) string {
+	cs := DataRandCS
+	if len(charset) > 0 {
+		cs = charset[0]
+	}
+	result := randomByteSlice(size, prefix, cs)
 	return *(*string)(unsafe.Pointer(&result)) // faster way to convert big slice to string
 }
 
-//CreateSomeEntities create `count` of random entities with given chars in data (20000 by default)
-func CreateSomeEntities(count int, dataSize ...int) []Entity {
+//GenerateSomeEntities create `count` of random entities with given chars in data (20000 by default)
+func GenerateSomeEntities(count int, dataSize ...int) []Entity {
 	size := 20000
 	if len(dataSize) > 0 {
 		size = dataSize[0]
@@ -46,7 +50,7 @@ func CreateSomeEntities(count int, dataSize ...int) []Entity {
 		func() {
 			data[i] = Entity{
 				Uuid: uuid.NewV4().String(),
-				Data: randomString(size, "RANDOM DATA: "),
+				Data: RandomString(size, "RANDOM DATA: "),
 			}
 		}()
 	}

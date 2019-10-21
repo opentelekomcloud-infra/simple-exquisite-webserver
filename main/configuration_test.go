@@ -80,71 +80,98 @@ func strConfigTemplate(src *main.Configuration) []string {
 			fmt.Sprintf("  username: %s", src.Postgres.Username),
 			fmt.Sprintf("  password: %s", src.Postgres.Password),
 		)
+		if src.Postgres.Initial != nil {
+			res = append(res, "  initial_data:",
+				fmt.Sprintf("    count: %d", src.Postgres.Initial.Count),
+				fmt.Sprintf("    size: %d", src.Postgres.Initial.Size),
+			)
+		}
 	}
 	return res
 }
 
-func TestWriteConfigValidPathPg(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
+var simpleCS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+var testDataSet = map[string]main.Configuration{
+	"Without Postgres": {
+		Debug:      false,
+		ServerPort: r.Intn(0xffff),
+	},
+	"With Postgres": {
+		Debug:      false,
 		ServerPort: r.Intn(0xffff),
 		Postgres: &main.PostgresConfig{
 			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-			Database: "edlkjsfd",
-			Username: "sfdjnsfdjlkjsfd",
-			Password: "opoxgdp[koiujiklililhkjg",
+			Database: main.RandomString(15, "", simpleCS),
+			Username: main.RandomString(15, "", simpleCS),
+			Password: main.RandomString(10, "", simpleCS),
 		},
-	}
-	var path = validRandomPath()
-	err := src.WriteConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't write configuration")
-	} else {
-		t.Logf("Config written to %s", path)
-	}
-
-	targetFile, _ := os.Open(path)
-	buffer, err := ioutil.ReadAll(targetFile)
-	if err != nil {
-		t.Errorf("Can't read configuration file")
-	}
-	strBuf := string(buffer)
-
-	data := strings.Split(strings.TrimSpace(strBuf), "\n")
-
-	expected := strConfigTemplate(&src)
-	errorOnDiff(expected, data, t)
+	},
+	"With Postgres And Initial Data": {
+		Debug:      false,
+		ServerPort: r.Intn(0xffff),
+		Postgres: &main.PostgresConfig{
+			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+			Database: main.RandomString(15, "", simpleCS),
+			Username: main.RandomString(15, "", simpleCS),
+			Password: main.RandomString(10, "", simpleCS),
+			Initial: &main.InitialData{
+				Count: 100,
+				Size:  20,
+			},
+		},
+	},
 }
 
-func TestLoadConfigValidPathPg(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
-		ServerPort: r.Intn(0xffff),
-		Postgres: &main.PostgresConfig{
-			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-			Database: "edlkjsfd",
-			Username: "sfdjnsfdjlkjsfd",
-			Password: "opoxgdp[koiujiklililhkjg",
-		},
+func TestWriteConfigValidPathPg(t *testing.T) {
+	for name, cfg := range testDataSet {
+		t.Run(name, func(t *testing.T) {
+			var path = validRandomPath()
+			err := cfg.WriteConfiguration(path)
+			if err != nil {
+				t.Errorf("Can't write configuration")
+			} else {
+				t.Logf("Config written to %s", path)
+			}
+
+			targetFile, _ := os.Open(path)
+			buffer, err := ioutil.ReadAll(targetFile)
+			if err != nil {
+				t.Errorf("Can't read configuration file")
+			}
+			strBuf := string(buffer)
+
+			data := strings.Split(strings.TrimSpace(strBuf), "\n")
+
+			expected := strConfigTemplate(&cfg)
+			errorOnDiff(expected, data, t)
+		})
 	}
-	expected := strConfigTemplate(&src)
-	path := validRandomPath()
-	file, err := os.Create(path)
-	if err != nil {
-		t.Errorf("Can't open configuration file")
-		return
+}
+
+func TestLoadConfiguration(t *testing.T) {
+	for name, cfg := range testDataSet {
+		t.Run(name, func(t *testing.T) {
+			expected := strConfigTemplate(&cfg)
+			path := validRandomPath()
+			file, err := os.Create(path)
+			if err != nil {
+				t.Errorf("Can't open configuration file")
+				return
+			}
+
+			_, err = file.WriteString(strings.Join(expected, "\n"))
+			if err != nil {
+				t.Errorf("Can't write configuration file")
+				return
+			}
+
+			res, err := main.LoadConfiguration(path)
+			if err != nil {
+				t.Errorf("Can't load configuration")
+				return
+			}
+			errorOnDiff(cfg, *res, t)
+		})
 	}
 
-	_, err = file.WriteString(strings.Join(expected, "\n"))
-	if err != nil {
-		t.Errorf("Can't write configuration file")
-		return
-	}
-
-	res, err := main.LoadConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't load configuration")
-		return
-	}
-	errorOnDiff(src, *res, t)
 }

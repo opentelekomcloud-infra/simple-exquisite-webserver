@@ -15,11 +15,17 @@ func getUserDir() string {
 var defaultUserDir = filepath.Join(getUserDir(), ".too-simple")
 var defaultCfgPATH = filepath.Join(defaultUserDir, "config.yml")
 
+type InitialData struct {
+	Count int `yaml:"count"`
+	Size  int `yaml:"size"`
+}
+
 type PostgresConfig struct {
-	DbURL    string `yaml:"db_url"`
-	Database string `yaml:"database"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	DbURL    string       `yaml:"db_url"`
+	Database string       `yaml:"database"`
+	Username string       `yaml:"username"`
+	Password string       `yaml:"password"`
+	Initial  *InitialData `yaml:"initial_data,omitempty"`
 }
 
 // Configuration file structure

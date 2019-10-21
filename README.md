@@ -15,13 +15,18 @@ Server can use PostgreSQL database
 
 Server configuration is done with configuration yaml file:
 ```yaml
-debug: true
-server_port: 5449 
+debug: false
+server_port: 9069
 
-pg_bd_url: 'localhost:9999'
-pg_database: 'users'
-pg_username: 'admin'
-pg_password: 'qwertyui!'
+postgres: # Required if debug is false
+  db_url: localhost:46063
+  database: edlkjsfd
+  username: sfdjnsfdjlkjsfd
+  password: opoxgdp[koiujiklililhkjg
+  
+  initial_data:  # Records generated at app initialization (skipped if missing)
+    count: 10000  # Number of created records
+    size: 20000  # Size of each record created
 ```
 
 Default location of configuration file is `/etc/too-simple/config.yml`,
@@ -29,3 +34,5 @@ this can be changed using `--config` argument
 
 Debug mode is switched using `--debug` argument or setting `debug: true` in configuration.
 When debug is on, no database will be used.
+
+You can get application version using `--version` argument

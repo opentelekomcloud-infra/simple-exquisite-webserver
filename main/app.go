@@ -23,8 +23,14 @@ type App struct {
 	DB     *sql.DB
 }
 
-func generateRandomInitData(db *sql.DB) {
-	ents := CreateSomeEntities(10000, 20000)
+func generateRandomInitData(db *sql.DB, config *Configuration) {
+	if (config.Postgres == nil) || (config.Postgres.Initial == nil) {
+		log.Println("No initial data will be generated")
+		return
+	}
+
+	initial := config.Postgres.Initial
+	ents := GenerateSomeEntities(initial.Count, initial.Size)
 	err := AddEntities(db, ents)
 	if err != nil {
 		log.Println("Can't fill database with initial data")
@@ -34,6 +40,9 @@ func generateRandomInitData(db *sql.DB) {
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
+		if config.Postgres == nil {
+			log.Panic("No postgres configuration is given, but debug mode is disabled")
+		}
 		var PgDbURL = config.Postgres.DbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
 		host := dbURLSliced[0]
@@ -51,11 +60,11 @@ func (a *App) Initialize(config *Configuration) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		CreateTable(a.DB)
 	} else {
 		a.DB = nil
 	}
-	CreateTable(a.DB)
-	go generateRandomInitData(a.DB)
+	go generateRandomInitData(a.DB, config)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }

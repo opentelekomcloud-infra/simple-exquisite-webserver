@@ -36,9 +36,6 @@ func CreatePostgreDBIfNotExist(dbName string, host string, port int, username st
 
 // CreateTable if not exists
 func CreateTable(db *sql.DB) {
-	if db == nil {
-		return
-	}
 	sqlTable := `
         CREATE TABLE IF NOT EXISTS entity(
                 uuid TEXT NOT NULL PRIMARY KEY,

@@ -194,7 +194,7 @@ func TestDeleteEntity(t *testing.T) {
 func TestBulkDataGeneration(t *testing.T) {
 	count := 10000
 	size := 13
-	entities := main.CreateSomeEntities(count, size)
+	entities := main.GenerateSomeEntities(count, size)
 	rReal := len(entities)
 	if rReal != count {
 		t.Errorf("%d entities instead of %d", count, rReal)
