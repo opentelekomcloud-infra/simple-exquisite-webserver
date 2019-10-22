@@ -19,10 +19,10 @@ debug: false
 server_port: 9069
 
 postgres: # Required if debug is false
-  db_url: localhost:46063
-  database: edlkjsfd
-  username: sfdjnsfdjlkjsfd
-  password: opoxgdp[koiujiklililhkjg
+  db_url: 'localhost:46063'
+  database: 'users'
+  username: 'admin'
+  password: 'Qwertyui!2019'
   
   initial_data:  # Records generated at app initialization (skipped if missing)
     count: 10000  # Number of created records
