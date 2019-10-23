@@ -15,8 +15,6 @@ import (
 	"github.com/twinj/uuid"
 )
 
-const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
-
 //App struct
 type App struct {
 	Router *mux.Router
@@ -50,7 +48,7 @@ func (a *App) Initialize(config *Configuration) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		createErr := CreatePostgreDBIfNotExist(config.Postgres.Database, host, port, config.Postgres.Username, config.Postgres.Database)
+		createErr := CreatePostgreDBIfNotExist(config.Postgres.Database, host, port, config.Postgres.Username, config.Postgres.Password)
 		if createErr != nil {
 			log.Fatalf("Error during db creation: %v", createErr)
 		}
@@ -73,6 +71,8 @@ func (a *App) Initialize(config *Configuration) {
 func (a *App) Run(addr string) {
 	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
+
+const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
 
 //InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
@@ -135,15 +135,22 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
-//GetEntities method
-func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
-	count, _ := strconv.Atoi(r.URL.Query().Get("count"))
+const DefaultEntityListSize = 1000
 
-	if count > 10 || count < 1 {
-		count = 10
+//GetEntities Return list of entities, 1000 by default
+func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
+	count := DefaultEntityListSize
+	cStr := r.URL.Query().Get("count")
+	if cStr != "" {
+		count, _ = strconv.Atoi(cStr)
+		if count < 1 {
+			count = DefaultEntityListSize
+		}
 	}
 
-	entities, err := getEntities(a.DB, count, "%")
+	filter := r.URL.Query().Get("filter")
+	entities, err := getEntities(a.DB, count, filter)
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return

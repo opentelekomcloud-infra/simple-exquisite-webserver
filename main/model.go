@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"regexp"
+	"strings"
 )
 
 // CreatePostgreDBIfNotExist create new database on given PostgreSQL instance if given DB does not exist on server
@@ -81,8 +82,7 @@ func (e *Entity) createEntity(db *sql.DB) error {
 	}
 
 	// postgres doesn't return the last inserted Uuid so this is the workaround
-	_, err := db.Exec(
-		"INSERT INTO entity(uuid, data) VALUES ($1, $2)", e.Uuid, e.Data)
+	_, err := db.Exec("INSERT INTO entity(uuid, data) VALUES ($1, $2)", e.Uuid, e.Data)
 	return err
 }
 
@@ -115,17 +115,34 @@ func isConnectionError(err error) bool {
 	}
 }
 
-func getEntities(db *sql.DB, count int, filter string) ([]Entity, error) {
+var validFilter, _ = regexp.Compile(`[a-zA-Z*]+`)
+
+func getEntities(db *sql.DB, count int, filter ...string) ([]Entity, error) {
+
+	like := ""
+	singleFilter := "*"
+	if len(filter) > 0 {
+		singleFilter = filter[0]
+		if singleFilter != "" {
+			if !validFilter.MatchString(singleFilter) {
+				return nil, fmt.Errorf("invalid filter: %s, only letters and * are allowed symbols", singleFilter)
+			}
+			singleFilter = strings.Replace(singleFilter, "*", "%", -1)
+			like = fmt.Sprintf("LIKE %s", singleFilter)
+		}
+	}
 	if db == nil {
-		return FakeList(count, 0)
+		return FakeList(count, singleFilter)
 	}
 
-	rows, err := db.Query(`
+	queryString := fmt.Sprintf(`
 		SELECT uuid, data
 			FROM entity
-			WHERE data LIKE $2
-			LIMIT $1`,
-		count, filter)
+			WHERE data %s
+			LIMIT $1`, like)
+
+	rows, err := db.Query(queryString, count, filter)
+
 	if err != nil {
 		if isConnectionError(err) {
 			return nil, errors.New("can't connect to database")
