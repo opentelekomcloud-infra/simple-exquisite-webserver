@@ -141,7 +141,7 @@ func getEntities(db *sql.DB, count int, filter ...string) ([]Entity, error) {
 			WHERE data %s
 			LIMIT $1`, like)
 
-	rows, err := db.Query(queryString, count, filter)
+	rows, err := db.Query(queryString, count)
 
 	if err != nil {
 		if isConnectionError(err) {

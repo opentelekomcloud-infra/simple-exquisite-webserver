@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -99,8 +100,9 @@ func logerr(_ int, err error) {
 	}
 }
 
-func respondWithError(w http.ResponseWriter, code int, message string) {
-	respondWithJSON(w, code, map[string]string{"error": message})
+func respondWithError(w http.ResponseWriter, code int, err error) {
+	log.Print(err)
+	respondWithJSON(w, code, map[string]string{"error": err.Error()})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
@@ -126,9 +128,9 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	if err := e.getEntity(a.DB); err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			respondWithError(w, http.StatusNotFound, "entity not found")
+			respondWithError(w, http.StatusNotFound, errors.New("entity not found"))
 		default:
-			respondWithError(w, http.StatusInternalServerError, err.Error())
+			respondWithError(w, http.StatusInternalServerError, err)
 		}
 		return
 	}
@@ -152,7 +154,7 @@ func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
 	entities, err := getEntities(a.DB, count, filter)
 
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -165,13 +167,14 @@ func (a *App) CreateEntity(w http.ResponseWriter, r *http.Request) {
 	e.Uuid = uuid.NewV4().String()
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&e); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 	defer func() { _ = r.Body.Close() }()
 
 	if err := e.createEntity(a.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		log.Print(err)
+		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -185,13 +188,13 @@ func (a *App) UpdateEntity(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&data); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		respondWithError(w, http.StatusBadRequest, errors.New("invalid request payload"))
 		return
 	}
 	defer func() { _ = r.Body.Close() }()
 
 	if err := data.updateEntity(a.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -205,7 +208,7 @@ func (a *App) DeleteEntity(w http.ResponseWriter, r *http.Request) {
 
 	e := Entity{Uuid: id}
 	if err := e.deleteEntity(a.DB); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
