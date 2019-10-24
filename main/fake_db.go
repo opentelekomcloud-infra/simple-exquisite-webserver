@@ -2,9 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"regexp"
+	"strings"
 )
 
-var FakeDataStorage map[string]Entity
+var FakeDataStorage = make(map[string]Entity)
 
 func FakeGet(e *Entity) error {
 	ent, ok := FakeDataStorage[e.Uuid]
@@ -15,23 +17,28 @@ func FakeGet(e *Entity) error {
 	return nil
 }
 
-func FakeList(length int, offset int) ([]Entity, error) {
+func FakeList(length int, filter string) ([]Entity, error) {
 	storLength := len(FakeDataStorage)
-	values := make([]Entity, storLength)
-	i := 0
+	values := make([]Entity, 0, storLength)
 
-	if max := storLength - offset; length > max {
-		length = max
+	reFilter := strings.Replace(filter, "%", ".*", -1)
+	if reFilter == "" {
+		reFilter = ".*"
 	}
-	if offset > storLength {
-		offset = storLength
-	}
-
 	for _, val := range FakeDataStorage {
-		values[i] = val
-		i++
+		match, _ := regexp.MatchString(reFilter, val.Data)
+		if match {
+			values = append(values, val)
+		}
 	}
-	return values[offset : offset+length], nil
+	if length > storLength {
+		length = storLength
+	}
+	vLength := len(values)
+	if length > vLength {
+		length = vLength
+	}
+	return values[:length], nil
 }
 
 func FakeNew(e *Entity) error {

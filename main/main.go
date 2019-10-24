@@ -10,7 +10,7 @@ import (
 	"syscall"
 )
 
-const version = "0.3.3"
+const version = "0.4.0"
 
 func allowedDir(path string) bool {
 	fileName := filepath.Join(path, "tmp.tmp")

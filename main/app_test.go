@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/opentelekomcloud-infra/simple-exquisite-webserver/main"
@@ -63,7 +65,7 @@ func addEntities(count int) {
 }
 
 /**
- * Test functions
+ * Test run setup/teardown
  */
 func TestMain(m *testing.M) {
 	a = main.App{}
@@ -194,7 +196,7 @@ func TestDeleteEntity(t *testing.T) {
 func TestBulkDataGeneration(t *testing.T) {
 	count := 10000
 	size := 13
-	entities := main.CreateSomeEntities(count, size)
+	entities := main.GenerateSomeEntities(count, size)
 	rReal := len(entities)
 	if rReal != count {
 		t.Errorf("%d entities instead of %d", count, rReal)
@@ -203,6 +205,58 @@ func TestBulkDataGeneration(t *testing.T) {
 		data := entities[i].Data
 		if len(data) != size {
 			t.Errorf("One of entities size is not %d: %v", size, data)
+		}
+	}
+}
+
+func addSomeEntity(data ...string) error {
+	var dataS string
+	if len(data) > 0 {
+		dataS = data[0]
+	} else {
+		dataS = main.RandomString(15, "MYDATA", okSet)
+	}
+
+	return main.FakeNew(&main.Entity{
+		Uuid: uuid.NewV4().String(),
+		Data: dataS,
+	})
+}
+
+var okSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func TestGetEntitiesCount(t *testing.T) {
+	max := 10
+	addEntities(max + 3)
+	randCount := rand.Intn(max) + 1
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/entities?count=%d", randCount), nil)
+	response := executeRequest(r)
+	var entities []*entity
+	_ = json.Unmarshal(response.Body.Bytes(), &entities)
+	if len(entities) != randCount {
+		t.Error("Count is not limiting GetEntities")
+	}
+}
+
+func TestGetEntitiesFilter(t *testing.T) {
+	max := 10
+	prefix := main.RandomString(3, "", okSet)
+	for i := 0; i < max; i++ {
+		data := main.RandomString(15, prefix, okSet)
+		_ = addSomeEntity(data)
+	}
+	addEntities(max)
+	r, _ := http.NewRequest("GET", fmt.Sprintf("/entities?filter=%s*", prefix), nil)
+	response := executeRequest(r)
+	var entities []*entity
+	bts := response.Body.Bytes()
+	_ = json.Unmarshal(bts, &entities)
+	if len(entities) != max {
+		t.Error("Filter is not limiting GetEntities")
+	}
+	for _, ent := range entities {
+		if !strings.HasPrefix(ent.Data, prefix) {
+			t.Errorf("Filter is not working: %s doesn't start with %s", ent.Data, prefix)
 		}
 	}
 }

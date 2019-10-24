@@ -18,7 +18,7 @@ import (
 /**
  * Helper functions
  */
-func logErr(n int, err error) {
+func logErr(_ int, err error) {
 	if err != nil {
 		log.Printf("Read failed: %v", err)
 	}
@@ -69,73 +69,109 @@ func TestLoadConfigErrorOnInvalidFilepath(t *testing.T) {
 var r = rand.New(rand.NewSource(0))
 
 func strConfigTemplate(src *main.Configuration) []string {
-	return []string{
+	res := []string{
 		fmt.Sprintf("debug: %v", src.Debug),
 		fmt.Sprintf("server_port: %v", src.ServerPort),
-		fmt.Sprintf("pg_db_url: %v", src.PgDbURL),
-		fmt.Sprintf("pg_database: %v", src.PgDatabase),
-		fmt.Sprintf("pg_username: %v", src.PgUsername),
-		fmt.Sprintf("pg_password: %v", src.PgPassword),
+	}
+	if src.Postgres != nil {
+		res = append(res,
+			"postgres:", fmt.Sprintf("  db_url: %v", src.Postgres.DbURL),
+			fmt.Sprintf("  database: %s", src.Postgres.Database),
+			fmt.Sprintf("  username: %s", src.Postgres.Username),
+			fmt.Sprintf("  password: %s", src.Postgres.Password),
+		)
+		if src.Postgres.Initial != nil {
+			res = append(res, "  initial_data:",
+				fmt.Sprintf("    count: %d", src.Postgres.Initial.Count),
+				fmt.Sprintf("    size: %d", src.Postgres.Initial.Size),
+			)
+		}
+	}
+	return res
+}
+
+var simpleCS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+var testDataSet = map[string]main.Configuration{
+	"Without Postgres": {
+		Debug:      false,
+		ServerPort: r.Intn(0xffff),
+	},
+	"With Postgres": {
+		Debug:      false,
+		ServerPort: r.Intn(0xffff),
+		Postgres: &main.PostgresConfig{
+			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+			Database: main.RandomString(15, "", simpleCS),
+			Username: main.RandomString(15, "", simpleCS),
+			Password: main.RandomString(10, "", simpleCS),
+		},
+	},
+	"With Postgres And Initial Data": {
+		Debug:      false,
+		ServerPort: r.Intn(0xffff),
+		Postgres: &main.PostgresConfig{
+			DbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
+			Database: main.RandomString(15, "", simpleCS),
+			Username: main.RandomString(15, "", simpleCS),
+			Password: main.RandomString(10, "", simpleCS),
+			Initial: &main.InitialData{
+				Count: 100,
+				Size:  20,
+			},
+		},
+	},
+}
+
+func TestWriteConfigValidPathPg(t *testing.T) {
+	for name, cfg := range testDataSet {
+		t.Run(name, func(t *testing.T) {
+			var path = validRandomPath()
+			err := cfg.WriteConfiguration(path)
+			if err != nil {
+				t.Errorf("Can't write configuration")
+			} else {
+				t.Logf("Config written to %s", path)
+			}
+
+			targetFile, _ := os.Open(path)
+			buffer, err := ioutil.ReadAll(targetFile)
+			if err != nil {
+				t.Errorf("Can't read configuration file")
+			}
+			strBuf := string(buffer)
+
+			data := strings.Split(strings.TrimSpace(strBuf), "\n")
+
+			expected := strConfigTemplate(&cfg)
+			errorOnDiff(expected, data, t)
+		})
 	}
 }
 
-func TestWriteConfigValidPath(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
-		ServerPort: r.Intn(0xffff),
-		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-		PgDatabase: "edlkjsfd",
-		PgUsername: "sfdjnsfdjlkjsfd",
-		PgPassword: "opoxgdp[koiujiklililhkjg",
-	}
-	var path = validRandomPath()
-	err := src.WriteConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't write configuration")
-	} else {
-		t.Logf("Config written to %s", path)
+func TestLoadConfiguration(t *testing.T) {
+	for name, cfg := range testDataSet {
+		t.Run(name, func(t *testing.T) {
+			expected := strConfigTemplate(&cfg)
+			path := validRandomPath()
+			file, err := os.Create(path)
+			if err != nil {
+				t.Errorf("Can't open configuration file")
+				return
+			}
+
+			_, err = file.WriteString(strings.Join(expected, "\n"))
+			if err != nil {
+				t.Errorf("Can't write configuration file")
+				return
+			}
+
+			res, err := main.LoadConfiguration(path)
+			if err != nil {
+				t.Errorf("Can't load configuration")
+				return
+			}
+			errorOnDiff(cfg, *res, t)
+		})
 	}
 
-	targetFile, _ := os.Open(path)
-	buffer, err := ioutil.ReadAll(targetFile)
-	if err != nil {
-		t.Errorf("Can't read configuration file")
-	}
-	strBuf := string(buffer)
-
-	data := strings.Split(strings.TrimSpace(strBuf), "\n")
-
-	expected := strConfigTemplate(&src)
-	errorOnDiff(expected, data, t)
-}
-
-func TestLoadConfigValidPath(t *testing.T) {
-	src := main.Configuration{
-		Debug:      1 == r.Intn(1),
-		ServerPort: r.Intn(0xffff),
-		PgDbURL:    fmt.Sprintf("localhost:%v", r.Intn(0xffff)),
-		PgDatabase: "edlkjsfd",
-		PgUsername: "sfdjnsfdjlkjsfd",
-		PgPassword: "opoxgdp[koiujiklililhkjg",
-	}
-	expected := strConfigTemplate(&src)
-	path := validRandomPath()
-	file, err := os.Create(path)
-	if err != nil {
-		t.Errorf("Can't open configuration file")
-		return
-	}
-
-	_, err = file.WriteString(strings.Join(expected, "\n"))
-	if err != nil {
-		t.Errorf("Can't write configuration file")
-		return
-	}
-
-	res, err := main.LoadConfiguration(path)
-	if err != nil {
-		t.Errorf("Can't load configuration")
-		return
-	}
-	errorOnDiff(src, *res, t)
 }

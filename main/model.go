@@ -4,19 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/twinj/uuid"
 	"log"
-	"math/rand"
 	"net"
 	"regexp"
-	"time"
-	"unsafe"
+	"strings"
 )
-
-type Entity struct {
-	Uuid string `json:"uuid"`
-	Data string `json:"data"`
-}
 
 // CreatePostgreDBIfNotExist create new database on given PostgreSQL instance if given DB does not exist on server
 func CreatePostgreDBIfNotExist(dbName string, host string, port int, username string, password string) error {
@@ -45,9 +37,6 @@ func CreatePostgreDBIfNotExist(dbName string, host string, port int, username st
 
 // CreateTable if not exists
 func CreateTable(db *sql.DB) {
-	if db == nil {
-		return
-	}
 	sqlTable := `
         CREATE TABLE IF NOT EXISTS entity(
                 uuid TEXT NOT NULL PRIMARY KEY,
@@ -93,48 +82,11 @@ func (e *Entity) createEntity(db *sql.DB) error {
 	}
 
 	// postgres doesn't return the last inserted Uuid so this is the workaround
-	_, err := db.Exec(
-		"INSERT INTO entity(uuid, data) VALUES ($1, $2)", e.Uuid, e.Data)
+	_, err := db.Exec("INSERT INTO entity(uuid, data) VALUES ($1, $2)", e.Uuid, e.Data)
 	return err
 }
 
-const DataRandCS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ :;~`\\|/?.,<>{}()&*%$#@"
-
-var src = rand.NewSource(time.Now().UnixNano())
-
-func randomString(size int, prefix string) string {
-	pLen := len(prefix)
-	result := make([]byte, size)
-	for i := 0; i < pLen; i++ {
-		result[i] = prefix[i]
-	}
-	for i := pLen; i < size; i++ {
-		result[i] = DataRandCS[src.Int63()%int64(len(DataRandCS))]
-	}
-	return *(*string)(unsafe.Pointer(&result)) // faster way to convert big slice to string
-}
-
-//CreateSomeEntities create `count` of random entities with given chars in data (20000 by default)
-func CreateSomeEntities(count int, dataSize ...int) []Entity {
-	size := 20000
-	var data = make([]Entity, count)
-	startTime := time.Now().Unix()
-	if len(dataSize) > 0 {
-		size = dataSize[0]
-	}
-	for i := 0; i < count; i++ {
-		func() {
-			data[i] = Entity{
-				Uuid: uuid.NewV4().String(),
-				Data: randomString(size, "RANDOM DATA: "),
-			}
-		}()
-	}
-	log.Print("Waiting for data to be generated...")
-	log.Printf("Generated data in %vs", time.Now().Unix()-startTime)
-	return data
-}
-
+//AddEntities — add multiple entities in single transaction
 func AddEntities(db *sql.DB, entities []Entity) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -163,17 +115,34 @@ func isConnectionError(err error) bool {
 	}
 }
 
-func getEntities(db *sql.DB, count int, filter string) ([]Entity, error) {
+var validFilter, _ = regexp.Compile(`[a-zA-Z*]+`)
+
+func getEntities(db *sql.DB, count int, filter ...string) ([]Entity, error) {
+
+	like := ""
+	singleFilter := "*"
+	if len(filter) > 0 {
+		singleFilter = filter[0]
+		if singleFilter != "" {
+			if !validFilter.MatchString(singleFilter) {
+				return nil, fmt.Errorf("invalid filter: %s, only letters and * are allowed symbols", singleFilter)
+			}
+			singleFilter = strings.Replace(singleFilter, "*", "%", -1)
+			like = fmt.Sprintf("LIKE %s", singleFilter)
+		}
+	}
 	if db == nil {
-		return FakeList(count, 0)
+		return FakeList(count, singleFilter)
 	}
 
-	rows, err := db.Query(`
+	queryString := fmt.Sprintf(`
 		SELECT uuid, data
 			FROM entity
-			WHERE data LIKE $2
-			LIMIT $1`,
-		count, filter)
+			WHERE data %s
+			LIMIT $1`, like)
+
+	rows, err := db.Query(queryString, count, filter)
+
 	if err != nil {
 		if isConnectionError(err) {
 			return nil, errors.New("can't connect to database")

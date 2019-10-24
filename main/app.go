@@ -15,38 +15,54 @@ import (
 	"github.com/twinj/uuid"
 )
 
-const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
-
 //App struct
 type App struct {
 	Router *mux.Router
 	DB     *sql.DB
 }
 
+func generateRandomInitData(db *sql.DB, config *Configuration) {
+	if (config.Postgres == nil) || (config.Postgres.Initial == nil) {
+		log.Println("No initial data will be generated")
+		return
+	}
+
+	initial := config.Postgres.Initial
+	ents := GenerateSomeEntities(initial.Count, initial.Size)
+	err := AddEntities(db, ents)
+	if err != nil {
+		log.Println("Can't fill database with initial data")
+	}
+}
+
 //Initialize func: init server according configuration structure
 func (a *App) Initialize(config *Configuration) {
 	if !config.Debug {
-		var PgDbURL = config.PgDbURL
+		if config.Postgres == nil {
+			log.Panic("No postgres configuration is given, but debug mode is disabled")
+		}
+		var PgDbURL = config.Postgres.DbURL
 		dbURLSliced := strings.Split(PgDbURL, ":")
 		host := dbURLSliced[0]
 		port, err := strconv.Atoi(dbURLSliced[1])
 		if err != nil {
 			log.Fatal(err)
 		}
-		createErr := CreatePostgreDBIfNotExist(config.PgDatabase, host, port, config.PgUsername, config.PgPassword)
+		createErr := CreatePostgreDBIfNotExist(config.Postgres.Database, host, port, config.Postgres.Username, config.Postgres.Password)
 		if createErr != nil {
 			log.Fatalf("Error during db creation: %v", createErr)
 		}
 		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			host, port, config.PgUsername, config.PgPassword, config.PgDatabase)
+			host, port, config.Postgres.Username, config.Postgres.Password, config.Postgres.Database)
 		a.DB, err = sql.Open("postgres", connectionString)
 		if err != nil {
 			log.Fatal(err)
 		}
+		CreateTable(a.DB)
 	} else {
 		a.DB = nil
 	}
-	CreateTable(a.DB)
+	go generateRandomInitData(a.DB, config)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }
@@ -55,6 +71,8 @@ func (a *App) Initialize(config *Configuration) {
 func (a *App) Run(addr string) {
 	log.Fatal(http.ListenAndServe(addr, a.Router))
 }
+
+const routeUUID4 = "/entity/{id:[a-z0-9]{8}-[a-z0-9]{4}-[1-5][a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{12}}"
 
 //InitializeRoutes - init routes for api requests
 func (a *App) InitializeRoutes() {
@@ -96,7 +114,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 //Ok answer for root calls
 func (a *App) Ok(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	logerr(w.Write([]byte("OK")))
+	logerr(w.Write(randomByteSlice(10, "OK", "0123456789abcdef")))
 }
 
 //GetEntity by Uuid
@@ -117,15 +135,22 @@ func (a *App) GetEntity(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, e)
 }
 
-//GetEntities method
-func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
-	count, _ := strconv.Atoi(r.URL.Query().Get("count"))
+const DefaultEntityListSize = 1000
 
-	if count > 10 || count < 1 {
-		count = 10
+//GetEntities Return list of entities, 1000 by default
+func (a *App) GetEntities(w http.ResponseWriter, r *http.Request) {
+	count := DefaultEntityListSize
+	cStr := r.URL.Query().Get("count")
+	if cStr != "" {
+		count, _ = strconv.Atoi(cStr)
+		if count < 1 {
+			count = DefaultEntityListSize
+		}
 	}
 
-	entities, err := getEntities(a.DB, count, "%")
+	filter := r.URL.Query().Get("filter")
+	entities, err := getEntities(a.DB, count, filter)
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
