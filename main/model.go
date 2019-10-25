@@ -128,7 +128,7 @@ func getEntities(db *sql.DB, count int, filter ...string) ([]Entity, error) {
 				return nil, fmt.Errorf("invalid filter: %s, only letters and * are allowed symbols", singleFilter)
 			}
 			singleFilter = strings.Replace(singleFilter, "*", "%", -1)
-			like = fmt.Sprintf("LIKE %s", singleFilter)
+			like = fmt.Sprintf("LIKE '%s'", singleFilter)
 		}
 	}
 	if db == nil {
