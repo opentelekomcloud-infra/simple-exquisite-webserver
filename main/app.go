@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -18,12 +19,14 @@ import (
 
 //App struct
 type App struct {
-	Router *mux.Router
-	DB     *sql.DB
+	Router           *mux.Router
+	DB               *sql.DB
+	DataGenerationWg sync.WaitGroup
 }
 
-func generateRandomInitData(db *sql.DB, config *Configuration) {
-	if (config.Postgres == nil) || (config.Postgres.Initial == nil) {
+func generateRandomInitData(db *sql.DB, config *Configuration, waitGroup *sync.WaitGroup) {
+	defer waitGroup.Done()
+	if config.Debug || config.Postgres == nil || config.Postgres.Initial == nil {
 		log.Println("No initial data will be generated")
 		return
 	}
@@ -63,7 +66,8 @@ func (a *App) Initialize(config *Configuration) {
 	} else {
 		a.DB = nil
 	}
-	go generateRandomInitData(a.DB, config)
+	a.DataGenerationWg.Add(1)
+	go generateRandomInitData(a.DB, config, &a.DataGenerationWg)
 	a.Router = mux.NewRouter()
 	a.InitializeRoutes()
 }
