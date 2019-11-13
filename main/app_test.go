@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -85,7 +86,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestNonExistingEntity(t *testing.T) {
+func TestApp_NonExistingEntity(t *testing.T) {
 	clearTable()
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/entity/%v", uuid.NewV4()), nil)
@@ -102,7 +103,7 @@ func TestNonExistingEntity(t *testing.T) {
 	}
 }
 
-func TestCreateEntity(t *testing.T) {
+func TestApp_CreateEntity(t *testing.T) {
 	clearTable()
 	payload := []byte(`{"data": "test data"}`)
 	req, _ := http.NewRequest("POST", "/entity", bytes.NewBuffer(payload))
@@ -118,14 +119,14 @@ func TestCreateEntity(t *testing.T) {
 	}
 }
 
-func TestGetRoot(t *testing.T) {
+func TestApp_GetRoot(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
-func TestGetEntities(t *testing.T) {
+func TestApp_GetEntities(t *testing.T) {
 	clearTable()
 	addEntities(1)
 
@@ -135,7 +136,7 @@ func TestGetEntities(t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
-func TestUpdateEntity(t *testing.T) {
+func TestApp_UpdateEntity(t *testing.T) {
 	clearTable()
 	addEntities(1)
 
@@ -168,7 +169,7 @@ func TestUpdateEntity(t *testing.T) {
 
 }
 
-func TestDeleteEntity(t *testing.T) {
+func TestApp_DeleteEntity(t *testing.T) {
 	clearTable()
 	addEntities(1)
 
@@ -193,7 +194,7 @@ func TestDeleteEntity(t *testing.T) {
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
-func TestBulkDataGeneration(t *testing.T) {
+func TestApp_BulkDataGeneration(t *testing.T) {
 	count := 10000
 	size := 13
 	entities := main.GenerateSomeEntities(count, size)
@@ -225,7 +226,7 @@ func addSomeEntity(data ...string) error {
 
 var okSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func TestGetEntitiesCount(t *testing.T) {
+func TestApp_GetEntitiesCount(t *testing.T) {
 	max := 10
 	addEntities(max + 3)
 	randCount := rand.Intn(max) + 1
@@ -238,7 +239,7 @@ func TestGetEntitiesCount(t *testing.T) {
 	}
 }
 
-func TestGetEntitiesFilter(t *testing.T) {
+func TestApp_GetEntitiesFilter(t *testing.T) {
 	max := 10
 	prefix := main.RandomString(3, "", okSet)
 	for i := 0; i < max; i++ {
@@ -258,5 +259,33 @@ func TestGetEntitiesFilter(t *testing.T) {
 		if !strings.HasPrefix(ent.Data, prefix) {
 			t.Errorf("Filter is not working: %s doesn't start with %s", ent.Data, prefix)
 		}
+	}
+}
+func prepareDebugConfigToFile(path string, data []byte) {
+	err := ioutil.WriteFile(path, data, 0644)
+	checkErr(err)
+}
+
+var configs = map[string][]byte{
+	"Without PG":          []byte("debug: true\nserver_port: 6666\n"),
+	"With PG":             []byte("debug: true\nserver_port: 6666\n\npostgres:\n  db_url: 'localhost:3306'\n  database: 'my'"),
+	"With PG And Initial": []byte("debug: true\nserver_port: 6666\n\npostgres:\n  db_url: 'localhost:3306'\n  database: 'my'\n  initial_data:\n    count: 10\n    size: 10"),
+}
+
+func TestApp_InitializeWithDebug(t *testing.T) {
+	for name, data := range configs {
+		t.Run(name, func(t *testing.T) {
+			b := main.App{}
+			path := "cfg1.yml"
+			defer func() { _ = os.Remove(path) }()
+			prepareDebugConfigToFile(path, data)
+			config, err := main.LoadConfiguration(path)
+			checkErr(err)
+			if b.DB != nil {
+				t.Error("Database is used with debug = True")
+			}
+			b.Initialize(config) // check that there is no exception
+			b.DataGenerationWg.Wait()
+		})
 	}
 }

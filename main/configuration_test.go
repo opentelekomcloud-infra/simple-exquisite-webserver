@@ -47,7 +47,7 @@ func errorOnDiff(expected interface{}, actual interface{}, t *testing.T) {
  * Test functions
  */
 //WriteConfig test with invalid path
-func TestWriteConfigErrorOnInvalidPath(t *testing.T) {
+func TestConfiguration_WriteConfigErrorOnInvalidPath(t *testing.T) {
 	var config main.Configuration
 	var path = invalidRandomPath()
 	// The following is the code under test
@@ -58,7 +58,7 @@ func TestWriteConfigErrorOnInvalidPath(t *testing.T) {
 }
 
 //LoadConfig test with invalid path
-func TestLoadConfigErrorOnInvalidFilepath(t *testing.T) {
+func TestConfiguration_LoadConfigErrorOnInvalidFilepath(t *testing.T) {
 	var path = invalidRandomPath()
 	_, err := main.LoadConfiguration(path)
 	if err == nil {
@@ -75,13 +75,15 @@ func strConfigTemplate(src *main.Configuration) []string {
 	}
 	if src.Postgres != nil {
 		res = append(res,
-			"postgres:", fmt.Sprintf("  db_url: %v", src.Postgres.DbURL),
+			"postgres:",
+			fmt.Sprintf("  db_url: %v", src.Postgres.DbURL),
 			fmt.Sprintf("  database: %s", src.Postgres.Database),
 			fmt.Sprintf("  username: %s", src.Postgres.Username),
 			fmt.Sprintf("  password: %s", src.Postgres.Password),
 		)
 		if src.Postgres.Initial != nil {
-			res = append(res, "  initial_data:",
+			res = append(res,
+				"  initial_data:",
 				fmt.Sprintf("    count: %d", src.Postgres.Initial.Count),
 				fmt.Sprintf("    size: %d", src.Postgres.Initial.Size),
 			)
@@ -93,7 +95,7 @@ func strConfigTemplate(src *main.Configuration) []string {
 var simpleCS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 var testDataSet = map[string]main.Configuration{
 	"Without Postgres": {
-		Debug:      false,
+		Debug:      true,
 		ServerPort: r.Intn(0xffff),
 	},
 	"With Postgres": {
@@ -122,7 +124,7 @@ var testDataSet = map[string]main.Configuration{
 	},
 }
 
-func TestWriteConfigValidPathPg(t *testing.T) {
+func TestConfiguration_WriteConfigValidPathPg(t *testing.T) {
 	for name, cfg := range testDataSet {
 		t.Run(name, func(t *testing.T) {
 			var path = validRandomPath()
@@ -147,8 +149,7 @@ func TestWriteConfigValidPathPg(t *testing.T) {
 		})
 	}
 }
-
-func TestLoadConfiguration(t *testing.T) {
+func TestConfiguration_LoadConfiguration(t *testing.T) {
 	for name, cfg := range testDataSet {
 		t.Run(name, func(t *testing.T) {
 			expected := strConfigTemplate(&cfg)
