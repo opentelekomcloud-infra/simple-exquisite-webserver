@@ -1,0 +1,131 @@
+swagger: "2.0"
+info:
+  description: "This is most wonderfully simple webserver written in Go(no)"
+  version: "0.4.3"
+  title: "Simple Exquisite Webserver"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "http://localhost:5054"
+basePath: "/"
+tags:
+- name: "index"
+  description: ""
+- name: "entity"
+  description: ""
+- name: "entities"
+  description: ""
+schemes:
+- "http"
+paths:
+  /:
+    get:
+      tags:
+      - "index"
+      summary: "Validate if server is up and running"
+      description: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        200: 
+          description: "OK"
+  /entities:
+    get:
+      tags:
+      - "entities"
+      summary: "Listing all existing entities"
+      description: "Return 1000 entities by default"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "OK"
+        500:
+          description: "Internal simple-ex-webserver error"
+  /entity:
+    post:
+      tags: 
+      - "entity"
+      summary: "Create an entity"
+      description: ""
+      consumes: 
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        201:
+          description: "Succesfully created"
+        400:
+          description: "Bad request"
+        500: 
+          description: "Internal simple-ex-webserver error"
+        
+  /entity/{UId}:
+    get:
+      tags: 
+      - "entity"
+      summary: "Get the entity by id"
+      description: ""
+      consumes: 
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "UId"
+        in: "path"
+        description: "ID of entity"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "OK"
+        404:
+          description: "Not found entity"
+        500:
+          description: "Internal simple-ex-server error"
+    put:
+      tags: 
+      - "entity"
+      summary: " Update the entity by id"
+      description: ""
+      consumes: 
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "UId"
+        in: "path"
+        description: "ID of entity"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Succesfully updated"
+        400:
+          description: "Bad request"
+        500:
+          description: "Internal simple-ex-webserver error"
+    delete:
+      tags: 
+      - "entity"
+      summary: "Delete the entity by id"
+      description: ""
+      consumes: 
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "UId"
+        in: "path"
+        description: "ID of entity"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Succesfully deleted"
+        500:
+          description: "Internal simple-ex-webserver error"
