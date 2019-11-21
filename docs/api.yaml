@@ -52,23 +52,21 @@ paths:
       responses:
         '201':
           description: Record successfully created
-          headers:
-            Location:
-              description: New record URL
+          content:
+            application/json:
               schema:
-                type: string
-                example: '/entity/28a670e7-4064-4014-8051-0ee049131eea'
+                $ref: '#/components/schemas/entityData'
         '400':
           description: Bad request
         '500':
           description: Internal server error
-  /entity/{uId}:
+  /entity/{uuid}:
     get:
       tags:
         - entity
       summary: Get the entity by id
       parameters:
-        - $ref: '#/components/parameters/uId'
+        - $ref: '#/components/parameters/uuid'
       responses:
         '200':
           description: OK
@@ -85,7 +83,7 @@ paths:
         - entity
       summary: Update the entity by id
       parameters:
-        - $ref: '#/components/parameters/uId'
+        - $ref: '#/components/parameters/uuid'
       responses:
         '200':
           description: Succesfully updated
@@ -102,7 +100,7 @@ paths:
         - entity
       summary: Delete the entity by id
       parameters:
-        - $ref: '#/components/parameters/uId'
+        - $ref: '#/components/parameters/uuid'
       responses:
         '200':
           description: Succesfully deleted
@@ -110,26 +108,26 @@ paths:
           description: Internal server error
 components:
   parameters:
-    uId:
-      name: uId
+    uuid:
+      name: uuid
       in: path
-      description: uId of an existing entity
+      description: uuid of an existing entity
       required: true
       schema:
-        $ref: '#/components/schemas/uId'
+        $ref: '#/components/schemas/uuid'
   schemas:
-    uId:
+    uuid:
       type: string
-      format: uId
-      description: 'HEX uid4'
+      format: uuid
+      description: 'HEX uuid4'
       example: '28a670e7-4064-4014-8051-0ee049131eea'
     entityData:
       type: object
       description: Data of the entity
       properties:
-        name:
+        Uuid:
           type: string
-        text:
+        Data:
           type: string
     entitiesData:
       type: array
