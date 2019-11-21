@@ -90,6 +90,11 @@ paths:
       summary: Update the entity by id
       parameters:
         - $ref: '#/components/parameters/uuid'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/entityData'
       responses:
         '200':
           description: Succesfully updated
@@ -128,15 +133,14 @@ components:
       description: 'HEX uuid4'
       example: '28a670e7-4064-4014-8051-0ee049131eea'
     entityData:
-      type: object
+      type: string
       description: Data of the entity
-      properties:
-        uuid:
-          type: string
-          format: uuid
-        data:
-          type: string
     entitiesData:
       type: array
       items:
-        $ref: '#/components/schemas/entityData'
+        type: object
+        properties:
+          uuid:
+            $ref: '#/components/schemas/uuid'
+          data:
+            $ref: '#/components/schemas/entityData'
