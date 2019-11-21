@@ -1,5 +1,7 @@
 # Simple Exquisite Webserver
 [![Build Status](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver)
+[![GitHub release](https://img.shields.io/github/v/release/opentelekomcloud-infra/simple-exquisite-webserver.svg)](https://github.com/opentelekomcloud-infra/simple-exquisite-webserver/releases/latest)
+[![GitHub license](https://img.shields.io/github/license/opentelekomcloud-infra/simple-exquisite-webserver.svg)](https://github.com/opentelekomcloud-infra/simple-exquisite-webserver/blob/master/LICENSE)
 
 ## API
 
