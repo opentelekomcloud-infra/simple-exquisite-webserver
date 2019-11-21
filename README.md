@@ -1,6 +1,8 @@
 # Simple Exquisite Webserver
 [![Build Status](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver)
 
+## API
+
 This is single-purpose web server having following endpoints:
 
 `/` — always returns http code `200`, can be used to validate if server is up and running
@@ -9,7 +11,11 @@ This is single-purpose web server having following endpoints:
 
 `/entity`, `/entity/<uuid>` — for creating and retrieving existing entities
 
+For detailed API secription see https://opentelekomcloud-infra.github.io/simple-exquisite-webserver/
+
 Every server response contains `Server` header with value equal to host name 
+
+## Configuration
 
 Server can use PostgreSQL database
 
