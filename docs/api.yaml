@@ -7,17 +7,14 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
   version: 0.4.3
 tags:
-  - name: index
-    description: ''
-  - name: entity
-    description: Actions with an entity
-  - name: entities
-    description: ''
+  - name: Index
+  - name: Entity
+  - name: Entities
 paths:
   /:
     get:
       tags:
-        - index
+        - Index
       summary: Validate if server is up and running
       responses:
         '200':
@@ -25,9 +22,20 @@ paths:
   /entities:
     get:
       tags:
-        - entities
+        - Entities
       summary: Listing all existing entities
       description: Return 1000 entities by default
+      parameters: 
+        - name: filter
+          in: query
+          description: Wildcard for entity data
+          schema:
+            type: string
+        - name: count
+          in: query
+          description: Maximum count of returned entities
+          schema:
+            type: integer
       responses:
         '200':
           description: OK
@@ -40,7 +48,7 @@ paths:
   /entity:
     post:
       tags:
-        - entity
+        - Entity
       summary: Create an entity
       requestBody:
         content:
@@ -61,7 +69,7 @@ paths:
   /entity/{uuid}:
     get:
       tags:
-        - entity
+        - Entity
       summary: Get the entity by id
       parameters:
         - $ref: '#/components/parameters/uuid'
@@ -78,7 +86,7 @@ paths:
           description: Internal server error
     put:
       tags:
-        - entity
+        - Entity
       summary: Update the entity by id
       parameters:
         - $ref: '#/components/parameters/uuid'
@@ -95,7 +103,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-        - entity
+        - Entity
       summary: Delete the entity by id
       parameters:
         - $ref: '#/components/parameters/uuid'
@@ -123,9 +131,10 @@ components:
       type: object
       description: Data of the entity
       properties:
-        Uuid:
+        uuid:
           type: string
-        Data:
+          format: uuid
+        data:
           type: string
     entitiesData:
       type: array
