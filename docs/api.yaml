@@ -42,7 +42,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/entitiesData'
+                $ref: '#/components/schemas/entityList'
         '500':
           description: Internal server error
   /entity:
@@ -54,14 +54,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/entityData'
+              $ref: '#/components/schemas/entity'
       responses:
         '201':
           description: Record successfully created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/entityData'
+                $ref: '#/components/schemas/entity'
         '400':
           description: Bad request
         '500':
@@ -79,7 +79,7 @@ paths:
           content: 
             application/json:
               schema:
-                $ref: '#/components/schemas/entityData'
+                $ref: '#/components/schemas/entity'
         '404':
           description: Not found entity
         '500':
@@ -94,14 +94,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/entityData'
+              $ref: '#/components/schemas/entity'
       responses:
         '200':
           description: Succesfully updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/entityData'
+                $ref: '#/components/schemas/entity'
         '400':
           description: Bad request
         '500':
@@ -132,15 +132,16 @@ components:
       format: uuid
       description: 'HEX uuid4'
       example: '28a670e7-4064-4014-8051-0ee049131eea'
-    entityData:
-      type: string
-      description: Data of the entity
-    entitiesData:
+      readOnly: true
+    entity:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        data:
+          type: string
+          description: Data of the entity
+    entityList:
       type: array
       items:
-        type: object
-        properties:
-          uuid:
-            $ref: '#/components/schemas/uuid'
-          data:
-            $ref: '#/components/schemas/entityData'
+        $ref: '#/components/schemas/entity'
