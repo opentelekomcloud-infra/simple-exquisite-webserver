@@ -15,3 +15,6 @@ vendor/
 
 # Test configs
 config.yml
+
+#binaries folder
+bin/
