@@ -1,5 +1,9 @@
 # Simple Exquisite Webserver
 [![Build Status](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver.svg?branch=master)](https://travis-ci.org/opentelekomcloud-infra/simple-exquisite-webserver)
+[![GitHub release](https://img.shields.io/github/v/release/opentelekomcloud-infra/simple-exquisite-webserver.svg)](https://github.com/opentelekomcloud-infra/simple-exquisite-webserver/releases/latest)
+[![GitHub license](https://img.shields.io/github/license/opentelekomcloud-infra/simple-exquisite-webserver.svg)](https://github.com/opentelekomcloud-infra/simple-exquisite-webserver/blob/master/LICENSE)
+
+## API
 
 This is single-purpose web server having following endpoints:
 
@@ -9,7 +13,11 @@ This is single-purpose web server having following endpoints:
 
 `/entity`, `/entity/<uuid>` — for creating and retrieving existing entities
 
+For detailed API secription see https://opentelekomcloud-infra.github.io/simple-exquisite-webserver/
+
 Every server response contains `Server` header with value equal to host name 
+
+## Configuration
 
 Server can use PostgreSQL database
 
