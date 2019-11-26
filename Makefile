@@ -15,7 +15,7 @@ lint:
 	@ echo lint install
 	@ go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	@ echo lint run
-	@ ../go/bin/golangci-lint run -D unused,deadcode
+	@ golangci-lint run -D unused,deadcode
 
 test:
 	@ echo test run
