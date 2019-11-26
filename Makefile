@@ -1,4 +1,5 @@
 export GO111MODULE=on
+export PATH:=/usr/local/go/bin:$(PATH)
 
 all: build
 
